@@ -7,7 +7,6 @@ import {
   Select,
   MultiSelect,
   Group,
-  Paper,
   Text,
   ActionIcon,
   Badge,
@@ -144,16 +143,16 @@ export default function DataTable({
 
   if (loading) {
     return (
-      <Paper className={cn('p-6 flex flex-col shadow-md', className)}>
+      <div className={cn('p-6 flex flex-col', className)}>
         <div className="flex items-center justify-center h-64">
           <Text size="sm" c="dimmed">Loading table data...</Text>
         </div>
-      </Paper>
+      </div>
     );
   }
 
   return (
-    <Paper className={cn('p-6 flex flex-col shadow-md', className)}>
+    <div className={cn('p-6 flex flex-col', className)}>
       <Stack gap="md" className="h-full flex flex-col">
         {/* Header */}
         <Group justify="space-between" align="center">
@@ -324,6 +323,6 @@ export default function DataTable({
           </Box>
         )}
       </Stack>
-    </Paper>
+    </div>
   );
 }

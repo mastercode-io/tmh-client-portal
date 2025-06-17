@@ -169,13 +169,13 @@ export default function HomePage() {
             </Paper>
 
             {/* Search Results Table */}
-            <div className="animate-slide-up flex-1 overflow-hidden flex flex-col">
+            <Paper p="lg" className="animate-slide-up flex-1 overflow-hidden flex flex-col">
               <DataTable 
                 data={data.search_data} 
                 onRefresh={refetch}
                 className="flex-1 overflow-hidden"
               />
-            </div>
+            </Paper>
           </Stack>
         </Container>
       </div>
