@@ -18,9 +18,6 @@ export default function ImageTest() {
       image: generateSimpleBase64Image(color)
     }));
     setTestImages(images);
-    
-    // Log the generated images for debugging
-    console.log('Generated test images:', images);
   };
   
   return (
@@ -65,12 +62,6 @@ export default function ImageTest() {
                         src={item.image} 
                         alt={`${item.color} test`}
                         style={{ width: '40px', height: '40px' }}
-                        onError={(e) => {
-                          console.error(`Regular img failed for ${item.color}:`, e);
-                          // Try to show the error target
-                          const target = e.target as HTMLImageElement;
-                          console.log('Error target:', target);
-                        }}
                       />
                     </div>
                   </Box>
@@ -92,35 +83,6 @@ export default function ImageTest() {
             </Group>
           </Box>
         )}
-        
-        {/* Test with manually created base64 */}
-        <Box mt={20}>
-          <Text size="sm" fw={500} mb="xs">Manual Base64 Test:</Text>
-          <Button 
-            size="sm" 
-            onClick={() => {
-              // Create a simple base64 image using canvas
-              const canvas = document.createElement('canvas');
-              canvas.width = 40;
-              canvas.height = 40;
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.fillStyle = 'red';
-                ctx.fillRect(0, 0, 40, 40);
-                const dataUrl = canvas.toDataURL('image/png');
-                console.log('Generated canvas image:', dataUrl);
-                
-                // Add to test images
-                setTestImages([
-                  ...testImages,
-                  { color: 'canvas-generated', image: dataUrl }
-                ]);
-              }
-            }}
-          >
-            Generate Canvas Image
-          </Button>
-        </Box>
       </Stack>
     </Paper>
   );

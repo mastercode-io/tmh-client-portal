@@ -9,7 +9,6 @@ import DataTable from '@/components/ui/DataTable';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useClientData } from '@/hooks/useClientData';
-import ImageTest from '@/components/ui/ImageTest';
 
 export default function HomePage() {
   const searchParams = useSearchParams();
@@ -19,36 +18,36 @@ export default function HomePage() {
 
   if (!requestId) {
     return (
-      <>
+      <div className="flex flex-col h-screen overflow-hidden">
         <Header />
-        <Container size="xl" className="flex-1 py-8">
+        <Container size="xl" className="flex-1 py-8 overflow-auto">
           <ErrorMessage
             title="Missing Request ID"
             message="Please provide a valid request ID in the URL parameter. Example: ?id=sample-client-123"
           />
         </Container>
         <Footer />
-      </>
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <>
+      <div className="flex flex-col h-screen overflow-hidden">
         <Header />
-        <Container size="xl" className="flex-1 py-8">
+        <Container size="xl" className="flex-1 py-8 overflow-auto">
           <LoadingSpinner centered message="Loading client data..." />
         </Container>
         <Footer />
-      </>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <>
+      <div className="flex flex-col h-screen overflow-hidden">
         <Header />
-        <Container size="xl" className="flex-1 py-8">
+        <Container size="xl" className="flex-1 py-8 overflow-auto">
           <ErrorMessage
             title="Failed to Load Data"
             message={error}
@@ -56,15 +55,15 @@ export default function HomePage() {
           />
         </Container>
         <Footer />
-      </>
+      </div>
     );
   }
 
   if (!data) {
     return (
-      <>
+      <div className="flex flex-col h-screen overflow-hidden">
         <Header />
-        <Container size="xl" className="flex-1 py-8">
+        <Container size="xl" className="flex-1 py-8 overflow-auto">
           <ErrorMessage
             title="No Data Found"
             message="No client data was found for the provided request ID."
@@ -72,16 +71,16 @@ export default function HomePage() {
           />
         </Container>
         <Footer />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="flex flex-col h-screen overflow-hidden">
       <Header clientName={data.client_info.client_name} />
       
-      <Container size="xl" className="flex-1 py-8">
-        <Stack gap="lg">
+      <Container size="xl" className="flex-1 py-4 overflow-hidden flex flex-col">
+        <Stack gap="md" className="h-full flex flex-col">
           {/* Client Information Card */}
           <Paper p="lg" className="animate-fade-in">
             <Group align="center" gap="sm" className="mb-4">
@@ -163,24 +162,17 @@ export default function HomePage() {
           <Divider />
 
           {/* Search Results Table */}
-          <div className="animate-slide-up">
+          <div className="animate-slide-up flex-1 overflow-hidden flex flex-col">
             <DataTable 
               data={data.search_data} 
               onRefresh={refetch}
+              className="flex-1 overflow-hidden flex flex-col"
             />
           </div>
-          
-          {/* Image Test Component (for debugging) */}
-          <Paper p="lg" className="animate-fade-in mt-8">
-            <Text size="lg" fw={600} className="mb-4">
-              Image Rendering Debug
-            </Text>
-            <ImageTest />
-          </Paper>
         </Stack>
       </Container>
       
       <Footer />
-    </>
+    </div>
   );
 }

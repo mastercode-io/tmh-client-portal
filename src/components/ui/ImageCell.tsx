@@ -43,19 +43,6 @@ export default function ImageCell({ src, alt = 'Image', className, size = 40 }: 
   const [opened, { open, close }] = useDisclosure(false);
   const [imageError, setImageError] = useState(false);
 
-  // Debug logging
-  console.log('Image source received: ', src ? {
-    length: src.length,
-    startsWithDataImage: src.startsWith('data:image/'),
-    includesBase64: src.includes('base64,'),
-    firstChars: src.substring(0, 25) + '...',
-    lastChars: '...' + src.substring(src.length - 25)
-  } : 'undefined');
-  
-  if (src) {
-    console.log('Image validation result:', isValidBase64Image(src));
-  }
-
   // If no image source is provided, show an empty cell
   if (!src) {
     return <EmptyCell />;

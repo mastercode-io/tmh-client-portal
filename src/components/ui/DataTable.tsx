@@ -144,7 +144,7 @@ export default function DataTable({
 
   if (loading) {
     return (
-      <Paper className={cn('p-6', className)}>
+      <Paper className={cn('p-6 flex flex-col', className)}>
         <div className="flex items-center justify-center h-64">
           <Text size="sm" c="dimmed">Loading table data...</Text>
         </div>
@@ -153,8 +153,8 @@ export default function DataTable({
   }
 
   return (
-    <Paper className={cn('p-6', className)}>
-      <Stack gap="md">
+    <Paper className={cn('p-6 flex flex-col', className)}>
+      <Stack gap="md" className="h-full flex flex-col">
         {/* Header */}
         <Group justify="space-between" align="center">
           <div>
@@ -216,10 +216,10 @@ export default function DataTable({
           )}
         </Group>
 
-        {/* Table */}
-        <ScrollArea>
+        {/* Table with ScrollArea taking remaining height */}
+        <ScrollArea className="flex-1" type="always" offsetScrollbars>
           <Table striped highlightOnHover withTableBorder>
-            <Table.Thead>
+            <Table.Thead sticky>
               <Table.Tr>
                 <Table.Th>Image</Table.Th>
                 <Table.Th
