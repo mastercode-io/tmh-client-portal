@@ -9,6 +9,7 @@ import DataTable from '@/components/ui/DataTable';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useClientData } from '@/hooks/useClientData';
+import ImageTest from '@/components/ui/ImageTest';
 
 export default function HomePage() {
   const searchParams = useSearchParams();
@@ -168,6 +169,14 @@ export default function HomePage() {
               onRefresh={refetch}
             />
           </div>
+          
+          {/* Image Test Component (for debugging) */}
+          <Paper p="lg" className="animate-fade-in mt-8">
+            <Text size="lg" fw={600} className="mb-4">
+              Image Rendering Debug
+            </Text>
+            <ImageTest />
+          </Paper>
         </Stack>
       </Container>
       

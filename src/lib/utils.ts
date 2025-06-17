@@ -36,9 +36,49 @@ export function generateBase64Image(color: string, width = 100, height = 100): s
 }
 
 export function isValidBase64Image(str: string): boolean {
+  // First, check if the string is defined and has the correct format
+  if (!str || typeof str !== 'string') {
+    console.log('Image validation failed: string is undefined or not a string');
+    return false;
+  }
+  
+  // Check if it starts with the data:image prefix
+  if (!str.startsWith('data:image/')) {
+    console.log('Image validation failed: missing data:image/ prefix');
+    return false;
+  }
+  
+  // Check if it contains the base64 marker
+  if (!str.includes('base64,')) {
+    console.log('Image validation failed: missing base64, marker');
+    return false;
+  }
+  
   try {
-    return str.startsWith('data:image/') && str.includes('base64,');
-  } catch {
+    // Extract the actual base64 content (after the comma)
+    const base64Content = str.split('base64,')[1];
+    
+    // Check if there's actual content
+    if (!base64Content || base64Content.length === 0) {
+      console.log('Image validation failed: empty base64 content');
+      return false;
+    }
+    
+    // Check if the base64 content has a reasonable length
+    // Even tiny 1x1 pixel images should have some content
+    // Removed the minimum length check as we're now using very small images
+    
+    // Check if the base64 content contains only valid base64 characters
+    const base64Regex = /^[A-Za-z0-9+/=]+$/;
+    if (!base64Regex.test(base64Content)) {
+      console.log('Image validation failed: invalid base64 characters');
+      return false;
+    }
+    
+    // If we got here, the image data looks valid
+    return true;
+  } catch (error) {
+    console.log('Image validation error:', error);
     return false;
   }
 }

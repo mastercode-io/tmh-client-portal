@@ -1,13 +1,14 @@
 import { ClientData, SearchItem } from './types';
 
-function generateSimpleBase64Image(color: string): string {
-  // Create a simple 40x40 colored rectangle as base64
+// Simplified base64 images that are guaranteed to work
+export function generateSimpleBase64Image(color: string): string {
+  // Create a simple 1x1 colored pixel as base64
   const colors: Record<string, string> = {
-    red: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAFYSURBVBiVY/j//z8DJQAggBhJVQcQQAykqgMIIAZS1QEEEMO/f/8Z/v//z/D///9/DP/+/WP49+8fw9+/fxn+/v3L8OfPH4Y/f/4w/P79m+H379+sV69eZSBVHUAAMZCqDiCAGP79+8fw9+9fhj9//jD8/v2b4c+fPwx//vxh+Pv3H8O/f/8Y/v//z/D//3+G////M/z//5/h////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DKSqAwggBlLVAQQQA6nqAAKIgVR1AAEEAJmGjSAh+BkhAAAAAElFTkSuQmCC',
-    blue: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAFYSURBVBiVY/j//z8DJQAggBhJVQcQQAykqgMIIAb/////M/z//5/h////DP/+/WP49+8fw9+/fxn+/v3L8OfPH4Y/f/4w/P79m+H379+sV69eZSBVHUAAMZCqDiCAGP79+8fw9+9fhj9//jD8/v2b4c+fPwx//vxh+Pv3H8O/f/8Y/v//z/D//3+G////M/z//5/h////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DKSqAwggBlLVAQQQA6nqAAKIgVR1AAEEAJmGjSAh+BkhAAAAAElFTkSuQmCC',
-    green: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAFYSURBVBiVY/j//z8DJQAggBhJVQcQQAykqgMIIAb////M/z//5/h////DP/+/WP49+8fw9+/fxn+/v3L8OfPH4Y/f/4w/P79m+H379+sV69eZSBVHUAAMZCqDiCAGP79+8fw9+9fhj9//jD8/v2b4c+fPwx//vxh+Pv3H8O/f/8Y/v//z/D//3+G////M/z//5/h////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DKSqAwggBlLVAQQQA6nqAAKIgVR1AAEEAJmGjSAh+BkhAAAAAElFTkSuQmCC',
-    orange: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAFYSURBVBiVY/j//z8DJQAggBhJVQcQQAykqgMIIAb////M/z//5/h////DP/+/WP49+8fw9+/fxn+/v3L8OfPH4Y/f/4w/P79m+H379+sV69eZSBVHUAAMZCqDiCAGP79+8fw9+9fhj9//jD8/v2b4c+fPwx//vxh+Pv3H8O/f/8Y/v//z/D//3+G////M/z//5/h////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DKSqAwggBlLVAQQQA6nqAAKIgVR1AAEEAJmGjSAh+BkhAAAAAElFTkSuQmCC',
-    purple: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAFYSURBVBiVY/j//z8DJQAggBhJVQcQQAykqgMIIAb////M/z//5/h////DP/+/WP49+8fw9+/fxn+/v3L8OfPH4Y/f/4w/P79m+H379+sV69eZSBVHUAAMZCqDiCAGP79+8fw9+9fhj9//jD8/v2b4c+fPwx//vxh+Pv3H8O/f/8Y/v//z/D//3+G////M/z//5/h////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DH/+/GH4/fs3w+/fvxn+/PnD8OfPH4Y/f/4w/P37l+Hfv38M//79Y/j//z/D////Gf7//8/w////DKSqAwggBlLVAQQQA6nqAAKIgVR1AAEEAJmGjSAh+BkhAAAAAElFTkSuQmCC'
+    red: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    blue: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
+    green: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+    orange: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
+    purple: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg=='
   };
   
   return `data:image/png;base64,${colors[color] || colors.blue}`;
