@@ -3,9 +3,7 @@
 import { useState, useMemo } from 'react';
 import {
   Table,
-  TextInput,
   Select,
-  MultiSelect,
   Group,
   Text,
   ActionIcon,
@@ -17,7 +15,6 @@ import {
   Box,
 } from '@mantine/core';
 import {
-  IconSearch,
   IconSortAscending,
   IconSortDescending,
   IconFilter,
@@ -41,7 +38,6 @@ export default function DataTable({
   loading = false, 
   className 
 }: DataTableProps) {
-  const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('created_date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [criteriaFilter, setCriteriaFilter] = useState<string[]>([]);
@@ -62,16 +58,6 @@ export default function DataTable({
 
   const filteredAndSortedData = useMemo(() => {
     let filtered = data;
-
-    // Apply search filter
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(item =>
-        item.search_term.toLowerCase().includes(searchLower) ||
-        item.remarks.toLowerCase().includes(searchLower) ||
-        item.classification.toLowerCase().includes(searchLower)
-      );
-    }
 
     // Apply criteria filter
     if (criteriaFilter.length > 0) {
@@ -104,7 +90,7 @@ export default function DataTable({
       
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [data, search, sortField, sortDirection, criteriaFilter, classificationFilter]);
+  }, [data, sortField, sortDirection, criteriaFilter, classificationFilter]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -116,12 +102,11 @@ export default function DataTable({
   };
 
   const clearFilters = () => {
-    setSearch('');
     setCriteriaFilter([]);
     setClassificationFilter([]);
   };
 
-  const hasActiveFilters = search.trim() || criteriaFilter.length > 0 || classificationFilter.length > 0;
+  const hasActiveFilters = criteriaFilter.length > 0 || classificationFilter.length > 0;
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return null;
@@ -162,86 +147,50 @@ export default function DataTable({
           </Text>
         </Group>
 
-        {/* Filters */}
-        <Group gap="md" wrap="wrap">
-          <TextInput
-            placeholder="Search terms, remarks, or classification..."
-            leftSection={<IconSearch size={16} />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 min-w-64"
-          />
-          
-          <MultiSelect
-            placeholder="Filter by criteria"
-            data={criteriaOptions}
-            value={criteriaFilter}
-            onChange={setCriteriaFilter}
-            leftSection={<IconFilter size={16} />}
-            className="min-w-48"
-          />
-          
-          <MultiSelect
-            placeholder="Filter by classification"
-            data={classificationOptions}
-            value={classificationFilter}
-            onChange={setClassificationFilter}
-            leftSection={<IconFilter size={16} />}
-            className="min-w-48"
-          />
-          
-          {hasActiveFilters && (
-            <Button
-              variant="subtle"
-              leftSection={<IconFilterOff size={16} />}
-              onClick={clearFilters}
-              size="sm"
-            >
-              Clear Filters
-            </Button>
-          )}
-        </Group>
-
         {/* Table with ScrollArea taking remaining height */}
         <ScrollArea className="flex-1" type="always" offsetScrollbars>
-          <Table highlightOnHover withBorder={false} borderless withRowBorders={false}>
-            <Table.Thead sticky>
+          <Table highlightOnHover withBorder={false} borderless withRowBorders={false} stickyHeader stickyHeaderOffset={0} classNames={{ thead: 'bg-[#6c7d8c] text-white' }}>
+            <Table.Thead style={{ backgroundColor: '#6c7d8c', color: 'white', position: 'sticky', top: 0, zIndex: 10 }}>
               <Table.Tr>
-                <Table.Th>Image</Table.Th>
+                <Table.Th style={{ color: 'white' }}>Image</Table.Th>
                 <Table.Th
                   className="cursor-pointer hover:bg-tmh-gray-bg"
                   onClick={() => handleSort('search_term')}
+                  style={{ color: 'white' }}
                 >
                   <Group gap="xs">
-                    <Text size="sm" fw={500}>Search Term</Text>
+                    <Text size="sm" fw={500} c="white">Search Term</Text>
                     {getSortIcon('search_term')}
                   </Group>
                 </Table.Th>
                 <Table.Th
                   className="cursor-pointer hover:bg-tmh-gray-bg"
                   onClick={() => handleSort('search_criteria')}
+                  style={{ color: 'white' }}
                 >
                   <Group gap="xs">
-                    <Text size="sm" fw={500}>Criteria</Text>
+                    <Text size="sm" fw={500} c="white">Criteria</Text>
                     {getSortIcon('search_criteria')}
                   </Group>
                 </Table.Th>
                 <Table.Th
                   className="cursor-pointer hover:bg-tmh-gray-bg"
                   onClick={() => handleSort('classification')}
+                  style={{ color: 'white' }}
                 >
                   <Group gap="xs">
-                    <Text size="sm" fw={500}>Classification</Text>
+                    <Text size="sm" fw={500} c="white">Classification</Text>
                     {getSortIcon('classification')}
                   </Group>
                 </Table.Th>
-                <Table.Th>Remarks</Table.Th>
+                <Table.Th style={{ color: 'white' }}>Remarks</Table.Th>
                 <Table.Th
                   className="cursor-pointer hover:bg-tmh-gray-bg"
                   onClick={() => handleSort('created_date')}
+                  style={{ color: 'white' }}
                 >
                   <Group gap="xs">
-                    <Text size="sm" fw={500}>Created</Text>
+                    <Text size="sm" fw={500} c="white">Created</Text>
                     {getSortIcon('created_date')}
                   </Group>
                 </Table.Th>

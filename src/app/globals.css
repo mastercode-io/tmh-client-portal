@@ -67,6 +67,12 @@ a {
   background: var(--tmh-text-secondary);
 }
 
+/* Table header styling */
+.mantine-Table-thead, .mantine-Table-th {
+  background-color: #6c7d8c !important;
+  color: white !important;
+}
+
 /* Animation utilities */
 @keyframes fadeIn {
   from {
