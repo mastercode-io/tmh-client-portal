@@ -172,7 +172,6 @@ export default function HomePage() {
             <Paper p="lg" className="animate-slide-up flex-1 overflow-hidden flex flex-col">
               <DataTable 
                 data={data.search_data} 
-                onRefresh={refetch}
                 className="flex-1 overflow-hidden"
               />
             </Paper>

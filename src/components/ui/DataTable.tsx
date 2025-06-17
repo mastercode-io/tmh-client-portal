@@ -22,7 +22,6 @@ import {
   IconSortDescending,
   IconFilter,
   IconFilterOff,
-  IconRefresh,
 } from '@tabler/icons-react';
 import { SearchItem } from '@/lib/types';
 import { formatDate, cn } from '@/lib/utils';
@@ -31,7 +30,6 @@ import ImageCell from './ImageCell';
 interface DataTableProps {
   data: SearchItem[];
   loading?: boolean;
-  onRefresh?: () => void;
   className?: string;
 }
 
@@ -41,7 +39,6 @@ type SortDirection = 'asc' | 'desc';
 export default function DataTable({ 
   data, 
   loading = false, 
-  onRefresh,
   className 
 }: DataTableProps) {
   const [search, setSearch] = useState('');
@@ -158,21 +155,11 @@ export default function DataTable({
         <Group justify="space-between" align="center">
           <div>
             <Text size="lg" fw={600}>Search Results</Text>
-            <Text size="sm" c="dimmed">
-              {filteredAndSortedData.length} of {data.length} results
-              {hasActiveFilters && ' (filtered)'}
-            </Text>
           </div>
-          {onRefresh && (
-            <Button
-              variant="subtle"
-              leftSection={<IconRefresh size={16} />}
-              onClick={onRefresh}
-              size="sm"
-            >
-              Refresh
-            </Button>
-          )}
+          <Text size="sm" c="dimmed">
+            {filteredAndSortedData.length} results
+            {hasActiveFilters && ' (filtered)'}
+          </Text>
         </Group>
 
         {/* Filters */}
@@ -217,7 +204,7 @@ export default function DataTable({
 
         {/* Table with ScrollArea taking remaining height */}
         <ScrollArea className="flex-1" type="always" offsetScrollbars>
-          <Table striped highlightOnHover withTableBorder>
+          <Table highlightOnHover withBorder={false} borderless withRowBorders={false}>
             <Table.Thead sticky>
               <Table.Tr>
                 <Table.Th>Image</Table.Th>
