@@ -91,9 +91,9 @@ export default function HomePage() {
         <Container size="xl" className="py-4 h-full flex flex-col">
           <Stack gap="md" className="h-full flex flex-col">
             {/* Client Information Card */}
-            <Paper p="lg" className="animate-fade-in">
+            <Paper p="lg" className="animate-fade-in" bg="#6c7d8c" c="white">
               <Group align="center" gap="sm" className="mb-4">
-                <IconBuilding size={20} className="text-tmh-blue-primary" />
+                <IconBuilding size={20} className="text-white" />
                 <Text size="lg" fw={600}>
                   Client Information
                 </Text>
@@ -102,8 +102,8 @@ export default function HomePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <Group align="center" gap="xs" className="mb-2">
-                    <IconBuilding size={16} className="text-tmh-gray-secondary" />
-                    <Text size="sm" fw={500} c="dimmed">
+                    <IconBuilding size={16} className="text-gray-300" />
+                    <Text size="sm" fw={500} c="gray.3">
                       Company Name
                     </Text>
                   </Group>
@@ -114,8 +114,8 @@ export default function HomePage() {
                 
                 <div>
                   <Group align="center" gap="xs" className="mb-2">
-                    <IconSearch size={16} className="text-tmh-gray-secondary" />
-                    <Text size="sm" fw={500} c="dimmed">
+                    <IconSearch size={16} className="text-gray-300" />
+                    <Text size="sm" fw={500} c="gray.3">
                       Search Type
                     </Text>
                   </Group>
@@ -126,8 +126,8 @@ export default function HomePage() {
                 
                 <div>
                   <Group align="center" gap="xs" className="mb-2">
-                    <IconCalendar size={16} className="text-tmh-gray-secondary" />
-                    <Text size="sm" fw={500} c="dimmed">
+                    <IconCalendar size={16} className="text-gray-300" />
+                    <Text size="sm" fw={500} c="gray.3">
                       Classifications
                     </Text>
                   </Group>
@@ -137,7 +137,7 @@ export default function HomePage() {
                 </div>
                 
                 <div>
-                  <Text size="sm" fw={500} c="dimmed" className="mb-2">
+                  <Text size="sm" fw={500} c="gray.3" className="mb-2">
                     SIC Code
                   </Text>
                   <Text size="sm">
@@ -146,7 +146,7 @@ export default function HomePage() {
                 </div>
                 
                 <div>
-                  <Text size="sm" fw={500} c="dimmed" className="mb-2">
+                  <Text size="sm" fw={500} c="gray.3" className="mb-2">
                     Business Nature
                   </Text>
                   <Text size="sm">
@@ -156,8 +156,8 @@ export default function HomePage() {
                 
                 <div>
                   <Group align="center" gap="xs" className="mb-2">
-                    <IconWorld size={16} className="text-tmh-gray-secondary" />
-                    <Text size="sm" fw={500} c="dimmed">
+                    <IconWorld size={16} className="text-gray-300" />
+                    <Text size="sm" fw={500} c="gray.3">
                       Countries
                     </Text>
                   </Group>
