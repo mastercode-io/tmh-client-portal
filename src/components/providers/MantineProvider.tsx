@@ -5,14 +5,14 @@ import { Notifications } from '@mantine/notifications';
 
 const theme = createTheme({
   primaryColor: 'blue',
-  fontFamily: 'Inter, system-ui, sans-serif',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   headings: {
-    fontFamily: 'Inter, system-ui, sans-serif',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   },
   colors: {
-    primary: [
+    blue: [
       '#eff6ff',
-      '#dbeafe',
+      '#dbeafe', 
       '#bfdbfe',
       '#93c5fd',
       '#60a5fa',
@@ -20,7 +20,19 @@ const theme = createTheme({
       '#2563eb',
       '#1d4ed8',
       '#1e40af',
-      '#1e3a8a',
+      '#1e3a8a'
+    ],
+    gray: [
+      '#f9fafb',
+      '#f3f4f6',
+      '#e5e7eb',
+      '#d1d5db',
+      '#9ca3af',
+      '#6b7280',
+      '#4b5563',
+      '#374151',
+      '#1f2937',
+      '#111827'
     ],
   },
   components: {

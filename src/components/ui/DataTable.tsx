@@ -144,7 +144,7 @@ export default function DataTable({
 
   if (loading) {
     return (
-      <Paper className={cn('p-6 flex flex-col', className)}>
+      <Paper className={cn('p-6 flex flex-col shadow-md', className)}>
         <div className="flex items-center justify-center h-64">
           <Text size="sm" c="dimmed">Loading table data...</Text>
         </div>
@@ -153,7 +153,7 @@ export default function DataTable({
   }
 
   return (
-    <Paper className={cn('p-6 flex flex-col', className)}>
+    <Paper className={cn('p-6 flex flex-col shadow-md', className)}>
       <Stack gap="md" className="h-full flex flex-col">
         {/* Header */}
         <Group justify="space-between" align="center">
@@ -223,7 +223,7 @@ export default function DataTable({
               <Table.Tr>
                 <Table.Th>Image</Table.Th>
                 <Table.Th
-                  className="cursor-pointer hover:bg-gray-50"
+                  className="cursor-pointer hover:bg-tmh-gray-bg"
                   onClick={() => handleSort('search_term')}
                 >
                   <Group gap="xs">
@@ -232,7 +232,7 @@ export default function DataTable({
                   </Group>
                 </Table.Th>
                 <Table.Th
-                  className="cursor-pointer hover:bg-gray-50"
+                  className="cursor-pointer hover:bg-tmh-gray-bg"
                   onClick={() => handleSort('search_criteria')}
                 >
                   <Group gap="xs">
@@ -241,7 +241,7 @@ export default function DataTable({
                   </Group>
                 </Table.Th>
                 <Table.Th
-                  className="cursor-pointer hover:bg-gray-50"
+                  className="cursor-pointer hover:bg-tmh-gray-bg"
                   onClick={() => handleSort('classification')}
                 >
                   <Group gap="xs">
@@ -251,7 +251,7 @@ export default function DataTable({
                 </Table.Th>
                 <Table.Th>Remarks</Table.Th>
                 <Table.Th
-                  className="cursor-pointer hover:bg-gray-50"
+                  className="cursor-pointer hover:bg-tmh-gray-bg"
                   onClick={() => handleSort('created_date')}
                 >
                   <Group gap="xs">

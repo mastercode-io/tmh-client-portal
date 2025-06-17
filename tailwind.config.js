@@ -21,9 +21,32 @@ module.exports = {
           900: '#1e3a8a',
           950: '#172554',
         },
+        'tmh-blue': {
+          primary: '#1e40af',
+          secondary: '#3b82f6',
+          accent: '#60a5fa',
+        },
+        'tmh-dark': {
+          header: '#1f2937',
+          text: '#ffffff',
+        },
+        'tmh-gray': {
+          bg: '#f8fafc',
+          content: '#ffffff',
+          border: '#e2e8f0',
+          text: '#1f2937',
+          secondary: '#6b7280',
+          muted: '#9ca3af',
+        },
+        'tmh-status': {
+          success: '#10b981',
+          warning: '#f59e0b',
+          error: '#ef4444',
+          info: '#3b82f6',
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
