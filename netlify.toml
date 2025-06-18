@@ -1,6 +1,6 @@
 [build]
   publish = "out"
-  command = "npm install --legacy-peer-deps && npm run build"
+  command = "npm cache clean --force && npm install --legacy-peer-deps --include=dev && npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -8,7 +8,7 @@
 
 # Remove Next.js runtime to force static build
 [context.production]
-  command = "npm install --legacy-peer-deps && npm run build"
+  command = "npm cache clean --force && npm install --legacy-peer-deps --include=dev && npm run build"
 
 [[redirects]]
   from = "/api/*"
