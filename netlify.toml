@@ -4,6 +4,11 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# Remove Next.js runtime to force static build
+[context.production]
+  command = "npm ci && npm run build"
 
 [[redirects]]
   from = "/api/*"
