@@ -27,7 +27,7 @@ module.exports = {
           accent: '#60a5fa',
         },
         'tmh-dark': {
-          header: '#1f2937',
+          header: '#2c4459',
           text: '#ffffff',
         },
         'tmh-gray': {

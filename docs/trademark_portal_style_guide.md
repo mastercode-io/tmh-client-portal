@@ -11,7 +11,7 @@ A professional, trustworthy trademark services portal that maintains visual cons
 - **Accent Blue**: `#60a5fa` (Hover states and highlights)
 
 ### Header & Footer
-- **Dark Background**: `#1f2937` (Dark gray-blue matching footer)
+- **Dark Background**: `#2c4459` (Dark blue for header and footer)
 - **Header Text**: `#ffffff` (White text for contrast)
 
 ### Background & Content
@@ -77,7 +77,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
 
 ### Header
 ```css
-background-color: #1f2937;
+background-color: #2c4459;
 color: #ffffff;
 padding: 1rem 0;
 border-bottom: 1px solid #374151;
