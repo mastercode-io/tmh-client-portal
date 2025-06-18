@@ -8,7 +8,7 @@
 
 # Remove Next.js runtime to force static build
 [context.production]
-  command = "npm ci && npm run build"
+  command = "npm install --legacy-peer-deps && npm run build"
 
 [[redirects]]
   from = "/api/*"
