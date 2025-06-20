@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { SearchItem, TableSortState, TableFilterState, UseTableReturn } from '@/lib/types';
+import { RowItem, TableSortState, TableFilterState, UseTableReturn } from '@/lib/types';
 import { sortData, filterData } from '@/lib/utils';
 
-export function useTable(data: SearchItem[]): UseTableReturn {
+export function useTable(data: RowItem[]): UseTableReturn {
   const [sortState, setSortState] = useState<TableSortState>({
     column: 'created_date',
     direction: 'desc',
@@ -16,7 +16,7 @@ export function useTable(data: SearchItem[]): UseTableReturn {
     classification: [],
   });
 
-  const handleSort = useCallback((column: keyof SearchItem) => {
+  const handleSort = useCallback((column: keyof RowItem) => {
     setSortState(prev => ({
       column,
       direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc',
