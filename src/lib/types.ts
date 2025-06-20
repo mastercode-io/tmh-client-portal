@@ -60,3 +60,26 @@ export interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
 }
+
+export interface TableConfig {
+  columns: {
+    key: string;
+    header: string;
+    visible: boolean;
+    sortable?: boolean;
+    width?: number;
+    maxLength?: number;
+    expandable?: boolean;
+  }[];
+  imageCell: {
+    width: number;
+    height: number;
+    modalSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  };
+  defaultSort?: {
+    field?: string;
+    direction: 'asc' | 'desc';
+  };
+  enableFiltering: boolean;
+  preserveColumnOrder?: boolean;
+}

@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { RowItem, TableConfig } from '@/lib/types';
 import { ImageCell } from './ImageCell';
+import { ExpandableCell } from './ExpandableCell';
 import { formatDate, generateConfigFromData, defaultTableConfig } from '@/lib/tableConfig';
 
 interface DataTableProps {
@@ -194,12 +195,15 @@ export default function DataTable({
 
   // Helper function to render the appropriate cell based on column key
   const renderCell = (item: RowItem, columnKey: string) => {
+    // Find the column config for this key
+    const columnConfig = tableConfig.columns.find(col => col.key === columnKey);
+    
     if (columnKey === 'image' && item.image) {
       return (
         <ImageCell 
           src={item.image} 
           alt={`Image for ${item.mark_text || item.app_number || 'item'}`}
-          width={tableConfig.imageCell.width}
+          width={columnConfig?.width || tableConfig.imageCell.width}
           height={tableConfig.imageCell.height}
           modalSize={tableConfig.imageCell.modalSize}
         />
@@ -229,6 +233,7 @@ export default function DataTable({
       );
     }
     
+    // Handle dates
     if (typeof value === 'string' && value.includes('GMT')) {
       // Try to format as date if it looks like a date string
       try {
@@ -241,7 +246,53 @@ export default function DataTable({
       }
     }
     
-    return String(value);
+    // Handle long text with expandable cell
+    if (typeof value === 'string' && 
+        columnConfig?.maxLength && 
+        value.length > columnConfig.maxLength && 
+        columnConfig.expandable) {
+      return (
+        <ExpandableCell 
+          content={value} 
+          maxLength={columnConfig.maxLength}
+          width={columnConfig.width}
+        />
+      );
+    }
+    
+    // Default rendering with tooltip for potentially long text
+    if (typeof value === 'string' && value.length > 50) {
+      return (
+        <Tooltip label={value} withArrow>
+          <Text 
+            size="sm" 
+            style={{ 
+              maxWidth: columnConfig?.width ? `${columnConfig.width}px` : '200px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {value}
+          </Text>
+        </Tooltip>
+      );
+    }
+    
+    // Simple text rendering with width constraint
+    return (
+      <Text 
+        size="sm"
+        style={{
+          maxWidth: columnConfig?.width ? `${columnConfig.width}px` : 'auto',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        {String(value)}
+      </Text>
+    );
   };
 
   if (loading) {
@@ -372,19 +423,31 @@ export default function DataTable({
                   stickyHeaderOffset={0}
                   classNames={{ thead: 'bg-[#6c7d8c] text-white' }}
               >
-                <Table.Thead style={{ backgroundColor: '#6c7d8c', color: 'white', position: 'sticky', top: 0, zIndex: 10 }}>
+                <Table.Thead>
                   <Table.Tr>
                     {visibleColumns.map(column => (
                       <Table.Th 
                         key={String(column.key)}
-                        className={column.sortable ? 'cursor-pointer hover:bg-tmh-gray-bg' : ''}
-                        onClick={column.sortable ? () => handleSort(column.key as SortField) : undefined}
-                        style={{ color: 'white', width: column.width }}
+                        onClick={() => column.sortable ? handleSort(column.key as SortField) : null}
+                        style={{ 
+                          cursor: column.sortable ? 'pointer' : 'default',
+                          width: column.width ? `${column.width}px` : 'auto',
+                          minWidth: column.width ? `${column.width}px` : 'auto',
+                          maxWidth: column.width ? `${column.width}px` : 'auto',
+                        }}
                       >
-                        <Group gap="xs">
-                          <Text size="sm" fw={500} c="white">{column.header}</Text>
-                          {column.sortable && getSortIcon(column.key as SortField)}
-                        </Group>
+                        <div className="flex items-center gap-2">
+                          <span>{column.header}</span>
+                          {column.sortable && sortField === column.key && (
+                            <span>
+                              {sortDirection === 'asc' ? (
+                                <IconSortAscending size={16} />
+                              ) : (
+                                <IconSortDescending size={16} />
+                              )}
+                            </span>
+                          )}
+                        </div>
                       </Table.Th>
                     ))}
                   </Table.Tr>
@@ -393,7 +456,14 @@ export default function DataTable({
                   {sortedData.map((item) => (
                     <Table.Tr key={item.id}>
                       {visibleColumns.map(column => (
-                        <Table.Td key={`${item.id}-${String(column.key)}`}>
+                        <Table.Td 
+                          key={`${item.id}-${String(column.key)}`}
+                          style={{
+                            width: column.width ? `${column.width}px` : 'auto',
+                            maxWidth: column.width ? `${column.width}px` : 'auto',
+                            overflow: 'hidden'
+                          }}
+                        >
                           {renderCell(item, column.key)}
                         </Table.Td>
                       ))}

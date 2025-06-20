@@ -9,6 +9,8 @@ export interface ColumnConfig {
   visible: boolean;
   sortable?: boolean;
   width?: number;
+  maxLength?: number; // Maximum length before truncation
+  expandable?: boolean; // Whether long content can be expanded
 }
 
 /**
@@ -31,6 +33,7 @@ export interface TableConfig {
     direction: 'asc' | 'desc';
   };
   enableFiltering: boolean;
+  preserveColumnOrder?: boolean; // New option to preserve column order from data
 }
 
 /**
@@ -38,12 +41,13 @@ export interface TableConfig {
  */
 export const defaultTableConfig: TableConfig = {
   columns: [
-    { key: 'id', header: 'ID', visible: true, sortable: true },
-    { key: 'app_number', header: 'Application Number', visible: true, sortable: true },
-    { key: 'mark_text', header: 'Mark Text', visible: true, sortable: true },
-    { key: 'classes', header: 'Classes', visible: true, sortable: true },
-    { key: 'image', header: 'Image', visible: true, sortable: false },
-    { key: 'status', header: 'Status', visible: true, sortable: true },
+    { key: 'id', header: 'ID', visible: true, sortable: true, width: 100 },
+    { key: 'app_number', header: 'Application Number', visible: true, sortable: true, width: 150 },
+    { key: 'mark_text', header: 'Mark Text', visible: true, sortable: true, width: 200, maxLength: 50, expandable: true },
+    { key: 'classes', header: 'Classes', visible: true, sortable: true, width: 100 },
+    { key: 'image', header: 'Image', visible: true, sortable: false, width: 100 },
+    { key: 'status', header: 'Status', visible: true, sortable: true, width: 120 },
+    { key: 'primary_goods_services', header: 'Goods & Services', visible: true, sortable: true, width: 250, maxLength: 100, expandable: true },
   ],
   imageCell: {
     width: 100,
@@ -53,7 +57,8 @@ export const defaultTableConfig: TableConfig = {
   defaultSort: {
     direction: 'desc'
   },
-  enableFiltering: true
+  enableFiltering: true,
+  preserveColumnOrder: true // New option to preserve column order from data
 };
 
 /**
@@ -69,10 +74,15 @@ export function generateConfigFromData(data: RowItem[]): TableConfig {
   const analyzedColumns = new Set<string>();
   const columnTypes: Record<string, string> = {};
   
+  // Get the first item to determine key order
+  const firstItem = data[0];
+  const orderedKeys = Object.keys(firstItem);
+  
   // Analyze data to determine column types
   for (const item of data) {
-    for (const [key, value] of Object.entries(item)) {
+    for (const key of orderedKeys) {
       if (!analyzedColumns.has(key)) {
+        const value = item[key];
         // Determine type based on value
         const type = value === undefined ? undefined : 
                      typeof value === 'string' && value.startsWith('data:image') ? 'image' :
@@ -86,19 +96,28 @@ export function generateConfigFromData(data: RowItem[]): TableConfig {
     }
     
     // Stop analysis if we've found types for all keys
-    if (Object.keys(data[0] || {}).every(key => analyzedColumns.has(key))) {
+    if (orderedKeys.every(key => analyzedColumns.has(key))) {
       break;
     }
   }
   
-  // Create column configs based on analyzed types
-  for (const [key, type] of Object.entries(columnTypes)) {
-    columns.push({
-      key,
-      header: formatColumnHeader(key),
-      visible: true,
-      sortable: type !== 'image',
-    });
+  // Create column configs based on analyzed types and preserve order
+  for (const key of orderedKeys) {
+    if (columnTypes[key]) {
+      const type = columnTypes[key];
+      const isLongText = type === 'string' && 
+                        data.some(item => item[key] && typeof item[key] === 'string' && (item[key] as string).length > 100);
+      
+      columns.push({
+        key,
+        header: formatColumnHeader(key),
+        visible: true,
+        sortable: type !== 'image',
+        width: determineColumnWidth(key, type),
+        maxLength: isLongText ? 100 : undefined,
+        expandable: isLongText
+      });
+    }
   }
   
   return {
@@ -111,8 +130,31 @@ export function generateConfigFromData(data: RowItem[]): TableConfig {
     defaultSort: {
       direction: 'desc'
     },
-    enableFiltering: true
+    enableFiltering: true,
+    preserveColumnOrder: true
   };
+}
+
+/**
+ * Determines an appropriate column width based on the key name and data type
+ */
+function determineColumnWidth(key: string, type: string): number {
+  // Set column widths based on content type
+  if (type === 'image') return 100;
+  
+  // Set widths based on common field names
+  switch (key) {
+    case 'id': return 80;
+    case 'app_number': return 150;
+    case 'mark_text': return 200;
+    case 'classes': return 100;
+    case 'status': return 120;
+    case 'owner_name': return 200;
+    case 'primary_goods_services': return 250;
+    default:
+      // Set width based on key length for other fields
+      return Math.max(100, Math.min(200, key.length * 10));
+  }
 }
 
 /**
@@ -148,7 +190,7 @@ export function generateTableConfigFromRawData(rawData: any): TableConfig {
     // Skip very large fields like base64 images
     const value = sampleItem[key];
     if (typeof value === 'object' && value !== null && 'base64' in value) {
-      columns.push({ key: 'image', header: 'Image', visible: true, sortable: false });
+      columns.push({ key: 'image', header: 'Image', visible: true, sortable: false, width: 100 });
       return;
     }
     
@@ -162,7 +204,8 @@ export function generateTableConfigFromRawData(rawData: any): TableConfig {
       key,
       header,
       visible: true,
-      sortable: true
+      sortable: true,
+      width: determineColumnWidth(key, typeof value)
     });
   });
   
@@ -177,7 +220,8 @@ export function generateTableConfigFromRawData(rawData: any): TableConfig {
       field: 'created_date',
       direction: 'desc'
     },
-    enableFiltering: true
+    enableFiltering: true,
+    preserveColumnOrder: true
   };
 }
 
