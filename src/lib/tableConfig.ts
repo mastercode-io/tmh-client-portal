@@ -19,7 +19,7 @@ export interface ColumnConfig {
 export interface ImageCellConfig {
   width: number;
   height: number;
-  modalSize?: string;
+  modalSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 /**
