@@ -64,13 +64,13 @@ export function transformResponseData(): ClientData {
  */
 function extractClasses(items: any[]): string {
   const allClasses = items
-    .map(item => item.classes || '')
+    .map((item: any) => item.classes || '')
     .filter(Boolean)
-    .flatMap(classes => classes.split(',').map(c => c.trim()))
+    .flatMap((classes: string) => classes.split(',').map((c: string) => c.trim()))
     .filter(Boolean);
   
   // Get unique classes
-  const uniqueClasses = [...new Set(allClasses)].sort((a, b) => {
+  const uniqueClasses = [...new Set(allClasses)].sort((a: string, b: string) => {
     const numA = parseInt(a);
     const numB = parseInt(b);
     return numA - numB;
@@ -83,18 +83,18 @@ function extractClasses(items: any[]): string {
  * Extracts unique countries from all items and formats them as a comma-separated string
  */
 function extractCountries(items: any[]): string {
-  const allCountries = items
-    .map(item => {
+  const allCountries: string[] = items
+    .map((item: any) => {
       if (item.office) {
         const match = item.office.match(/\(([^)]+)\)/);
         return match ? match[1] : item.office;
       }
       return item.owner_location || '';
     })
-    .filter(Boolean);
+    .filter((country: string) => Boolean(country));
   
   // Get unique countries
-  const uniqueCountries = [...new Set(allCountries)];
+  const uniqueCountries: string[] = [...new Set(allCountries)];
   
   return uniqueCountries.join(', ');
 }
