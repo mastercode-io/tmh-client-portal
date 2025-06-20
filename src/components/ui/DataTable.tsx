@@ -322,7 +322,7 @@ export default function DataTable({
 
           {/* Filters */}
           {tableConfig.enableFiltering && (
-            <Group position="apart" className="pb-2">
+            <Group justify="space-between" className="pb-2">
               <Group>
                 <Select
                   placeholder="Filter by criteria"
