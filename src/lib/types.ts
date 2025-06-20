@@ -7,18 +7,16 @@ export interface ClientInfo {
   countries: string;
 }
 
-export interface SearchItem {
-  id: string;
-  search_term: string;
-  search_criteria: 'Identical' | 'Similar' | 'Phonetic' | 'Broad';
-  remarks: string;
+export interface RowItem {
+  [key: string]: any; // Allow any property to support dynamic data structure
+  id?: string;
   image?: string; // base64 encoded image
-  classification: string;
 }
 
 export interface ClientData {
   client_info: ClientInfo;
-  search_data: SearchItem[];
+  search_data: RowItem[];
+  table_config?: TableConfig; // Optional embedded configuration
 }
 
 export interface ApiResponse<T = unknown> {
@@ -29,7 +27,7 @@ export interface ApiResponse<T = unknown> {
 }
 
 export interface TableSortState {
-  column: keyof SearchItem | null;
+  column: keyof RowItem | null;
   direction: 'asc' | 'desc';
 }
 
@@ -47,11 +45,11 @@ export interface UseClientDataReturn {
 }
 
 export interface UseTableReturn {
-  sortedData: SearchItem[];
-  filteredData: SearchItem[];
+  sortedData: RowItem[];
+  filteredData: RowItem[];
   sortState: TableSortState;
   filterState: TableFilterState;
-  handleSort: (column: keyof SearchItem) => void;
+  handleSort: (column: keyof RowItem) => void;
   handleFilter: (filters: Partial<TableFilterState>) => void;
   resetFilters: () => void;
 }

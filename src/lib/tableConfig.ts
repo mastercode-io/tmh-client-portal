@@ -1,14 +1,14 @@
-import { SearchItem } from './types';
+import { RowItem, TableConfig } from './types';
 
 /**
  * Configuration for a table column
  */
 export interface ColumnConfig {
-  key: keyof SearchItem | 'image';  // Special case for image column
+  key: string;
   header: string;
   visible: boolean;
-  width?: string;
   sortable?: boolean;
+  width?: number;
 }
 
 /**
@@ -27,22 +27,23 @@ export interface TableConfig {
   columns: ColumnConfig[];
   imageCell: ImageCellConfig;
   defaultSort?: {
-    field?: keyof SearchItem;
+    field?: string;
     direction: 'asc' | 'desc';
   };
   enableFiltering: boolean;
 }
 
 /**
- * Default table configuration
+ * Default table configuration used as a fallback
  */
 export const defaultTableConfig: TableConfig = {
   columns: [
-    { key: 'image', header: 'Image', visible: true },
-    { key: 'search_term', header: 'Search Term', visible: true, sortable: true },
-    { key: 'search_criteria', header: 'Criteria', visible: true, sortable: true },
-    { key: 'classification', header: 'Classification', visible: true, sortable: true },
-    { key: 'remarks', header: 'Remarks', visible: true },
+    { key: 'id', header: 'ID', visible: true, sortable: true },
+    { key: 'app_number', header: 'Application Number', visible: true, sortable: true },
+    { key: 'mark_text', header: 'Mark Text', visible: true, sortable: true },
+    { key: 'classes', header: 'Classes', visible: true, sortable: true },
+    { key: 'image', header: 'Image', visible: true, sortable: false },
+    { key: 'status', header: 'Status', visible: true, sortable: true },
   ],
   imageCell: {
     width: 100,
@@ -56,47 +57,49 @@ export const defaultTableConfig: TableConfig = {
 };
 
 /**
- * Dynamically generates table configuration based on the structure of the first data item
- * @param data The array of data items to analyze
- * @returns A generated TableConfig object
+ * Generates a table configuration based on the data structure
+ * Analyzes the data to determine column types and creates appropriate configuration
  */
-export function generateConfigFromData(data: SearchItem[]): TableConfig {
+export function generateConfigFromData(data: RowItem[]): TableConfig {
   if (!data || data.length === 0) {
     return defaultTableConfig;
   }
-
-  // Use the first item to determine available fields
-  const sampleItem = data[0];
-  const columns: ColumnConfig[] = [];
   
-  // Special case for image field if it exists
-  if ('image' in sampleItem && sampleItem.image) {
-    columns.push({ key: 'image', header: 'Image', visible: true });
+  const columns: ColumnConfig[] = [];
+  const analyzedColumns = new Set<string>();
+  const columnTypes: Record<string, string> = {};
+  
+  // Analyze data to determine column types
+  for (const item of data) {
+    for (const [key, value] of Object.entries(item)) {
+      if (!analyzedColumns.has(key)) {
+        // Determine type based on value
+        const type = value === undefined ? undefined : 
+                     typeof value === 'string' && value.startsWith('data:image') ? 'image' :
+                     typeof value;
+        
+        if (type !== undefined) {
+          columnTypes[key] = type;
+          analyzedColumns.add(key);
+        }
+      }
+    }
+    
+    // Stop analysis if we've found types for all keys
+    if (Object.keys(data[0] || {}).every(key => analyzedColumns.has(key))) {
+      break;
+    }
   }
   
-  // Add all other fields from the data
-  Object.keys(sampleItem).forEach(key => {
-    if (key !== 'image') { // Skip image as we've already handled it
-      const fieldKey = key as keyof SearchItem;
-      
-      // Determine if field should be sortable based on its type
-      const value = sampleItem[fieldKey];
-      const sortable = typeof value === 'string' || typeof value === 'number' || value instanceof Date;
-      
-      // Format the header from the key (e.g., 'search_term' -> 'Search Term')
-      const header = key
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-      
-      columns.push({
-        key: fieldKey,
-        header,
-        visible: true,
-        sortable
-      });
-    }
-  });
+  // Create column configs based on analyzed types
+  for (const [key, type] of Object.entries(columnTypes)) {
+    columns.push({
+      key,
+      header: formatColumnHeader(key),
+      visible: true,
+      sortable: type !== 'image',
+    });
+  }
   
   return {
     columns,
@@ -106,11 +109,21 @@ export function generateConfigFromData(data: SearchItem[]): TableConfig {
       modalSize: 'md'
     },
     defaultSort: {
-      field: 'created_date' in sampleItem ? 'created_date' : (columns[0]?.key as keyof SearchItem),
       direction: 'desc'
     },
     enableFiltering: true
   };
+}
+
+/**
+ * Formats a column key into a readable header
+ * Converts snake_case to Title Case
+ */
+function formatColumnHeader(key: string): string {
+  return key
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 /**
@@ -135,7 +148,7 @@ export function generateTableConfigFromRawData(rawData: any): TableConfig {
     // Skip very large fields like base64 images
     const value = sampleItem[key];
     if (typeof value === 'object' && value !== null && 'base64' in value) {
-      columns.push({ key: 'image', header: 'Image', visible: true });
+      columns.push({ key: 'image', header: 'Image', visible: true, sortable: false });
       return;
     }
     
@@ -146,7 +159,7 @@ export function generateTableConfigFromRawData(rawData: any): TableConfig {
       .join(' ');
     
     columns.push({
-      key: key as any,
+      key,
       header,
       visible: true,
       sortable: true
@@ -161,7 +174,7 @@ export function generateTableConfigFromRawData(rawData: any): TableConfig {
       modalSize: 'md'
     },
     defaultSort: {
-      field: 'created_date' as keyof SearchItem,
+      field: 'created_date',
       direction: 'desc'
     },
     enableFiltering: true
@@ -176,7 +189,7 @@ export function generateTableConfigFromRawData(rawData: any): TableConfig {
  * 4. Default hardcoded configuration as fallback
  */
 export function resolveTableConfig(
-  data: SearchItem[] | undefined, 
+  data: RowItem[] | undefined, 
   apiConfig?: TableConfig,
   loadedConfig?: TableConfig
 ): TableConfig {

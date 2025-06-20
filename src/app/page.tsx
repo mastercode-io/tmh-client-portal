@@ -20,18 +20,21 @@ export default function HomePage() {
   const { data, loading, error, refetch } = useClientData(requestId);
   const [tableConfig, setTableConfig] = useState<TableConfig | undefined>(undefined);
   
-  // Load table configuration when component mounts
+  // Load table configuration when component mounts or data changes
   useEffect(() => {
     async function fetchConfig() {
       try {
-        const config = await loadTableConfig();
+        const config = await loadTableConfig(data);
         setTableConfig(config);
       } catch (error) {
         console.error('Failed to load table configuration:', error);
       }
     }
-    fetchConfig();
-  }, []);
+    
+    if (data) {
+      fetchConfig();
+    }
+  }, [data]);
 
   if (!requestId) {
     return (

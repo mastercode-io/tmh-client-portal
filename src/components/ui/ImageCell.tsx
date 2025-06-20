@@ -41,7 +41,7 @@ interface ImageCellProps {
   modalSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export default function ImageCell({ 
+export function ImageCell({ 
   src, 
   alt = 'Image', 
   className, 

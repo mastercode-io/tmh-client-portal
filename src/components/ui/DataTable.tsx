@@ -20,19 +20,19 @@ import {
   IconFilter,
   IconFilterOff,
 } from '@tabler/icons-react';
-import { SearchItem } from '@/lib/types';
-import { formatDate, cn } from '@/lib/utils';
-import ImageCell from './ImageCell';
-import { TableConfig, defaultTableConfig, generateConfigFromData } from '@/lib/tableConfig';
+import { cn } from '@/lib/utils';
+import { RowItem, TableConfig } from '@/lib/types';
+import { ImageCell } from './ImageCell';
+import { formatDate, generateConfigFromData, defaultTableConfig } from '@/lib/tableConfig';
 
 interface DataTableProps {
-  data: SearchItem[];
+  data: RowItem[];
   loading?: boolean;
   className?: string;
   config?: TableConfig; // New prop for configuration
 }
 
-type SortField = keyof SearchItem;
+type SortField = keyof RowItem;
 type SortDirection = 'asc' | 'desc';
 
 export default function DataTable({
@@ -62,16 +62,34 @@ export default function DataTable({
     return tableConfig.columns.filter(col => col.visible);
   }, [tableConfig.columns]);
 
+  // Get unique values for filter dropdowns
   const criteriaOptions = useMemo(() => {
-    const unique = Array.from(new Set(data.map(item => item.search_criteria)));
-    return unique.map(criteria => ({ value: criteria, label: criteria }));
+    const uniqueCriteria = new Set<string>();
+    
+    data.forEach(item => {
+      if (item.search_criteria) {
+        uniqueCriteria.add(item.search_criteria as string);
+      }
+    });
+    
+    return Array.from(uniqueCriteria).map(value => ({
+      value,
+      label: value
+    }));
   }, [data]);
-
+  
   const classificationOptions = useMemo(() => {
-    const unique = Array.from(new Set(data.map(item => item.classification)));
-    return unique.map(classification => ({
-      value: classification,
-      label: classification
+    const uniqueClassifications = new Set<string>();
+    
+    data.forEach(item => {
+      if (item.classification) {
+        uniqueClassifications.add(item.classification as string);
+      }
+    });
+    
+    return Array.from(uniqueClassifications).map(value => ({
+      value,
+      label: value
     }));
   }, [data]);
 
@@ -101,28 +119,30 @@ export default function DataTable({
     return direction === 'asc' ? comparison : -comparison;
   };
 
-  const filteredAndSortedData = useMemo(() => {
-    let filtered = data;
+  // Apply filters to the data
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      // Apply criteria filter if active
+      if (criteriaFilter.length > 0 && item.search_criteria) {
+        if (!criteriaFilter.includes(item.search_criteria as string)) {
+          return false;
+        }
+      }
+      
+      // Apply classification filter if active
+      if (classificationFilter.length > 0 && item.classification) {
+        if (!classificationFilter.includes(item.classification as string)) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [data, criteriaFilter, classificationFilter]);
 
-    // Apply criteria filter
-    if (criteriaFilter.length > 0) {
-      filtered = filtered.filter(item =>
-          criteriaFilter.includes(item.search_criteria)
-      );
-    }
-
-    // Apply classification filter
-    if (classificationFilter.length > 0) {
-      filtered = filtered.filter(item =>
-          classificationFilter.some(filter =>
-              item.classification.toLowerCase().includes(filter.toLowerCase())
-          )
-      );
-    }
-
-    // Apply sorting
+  const sortedData = useMemo(() => {
     if (sortField) {
-      return filtered.sort((a, b) => {
+      return filteredData.sort((a, b) => {
         // Get values for sorting
         const aValue = a[sortField];
         const bValue = b[sortField];
@@ -138,8 +158,8 @@ export default function DataTable({
       });
     }
 
-    return filtered;
-  }, [data, sortField, sortDirection, criteriaFilter, classificationFilter]);
+    return filteredData;
+  }, [filteredData, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -173,12 +193,12 @@ export default function DataTable({
   };
 
   // Helper function to render the appropriate cell based on column key
-  const renderCell = (item: SearchItem, columnKey: string | keyof SearchItem) => {
-    if (columnKey === 'image') {
+  const renderCell = (item: RowItem, columnKey: string) => {
+    if (columnKey === 'image' && item.image) {
       return (
         <ImageCell 
           src={item.image} 
-          alt={`Image for ${item.search_term}`}
+          alt={`Image for ${item.mark_text || item.app_number || 'item'}`}
           width={tableConfig.imageCell.width}
           height={tableConfig.imageCell.height}
           modalSize={tableConfig.imageCell.modalSize}
@@ -186,42 +206,42 @@ export default function DataTable({
       );
     }
     
-    const key = columnKey as keyof SearchItem;
-    const value = item[key];
+    const value = item[columnKey];
     
-    // Render different cell types based on the data
-    if (key === 'search_criteria') {
+    // Handle different data types
+    if (value === null || value === undefined) {
+      return <Text size="sm" c="dimmed">—</Text>;
+    }
+    
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No';
+    }
+    
+    if (columnKey === 'search_criteria' && typeof value === 'string') {
       return (
         <Badge
-          color={getCriteriaColor(value as string)}
+          color={getCriteriaColor(value)}
           variant="light"
           size="sm"
         >
-          {value as string}
+          {value}
         </Badge>
       );
     }
     
-    if (key === 'created_date') {
-      return (
-        <Text size="sm" c="dimmed">
-          {formatDate(value as string)}
-        </Text>
-      );
-    }
-
-    if (key === 'remarks' || key === 'classification') {
-      return (
-        <Tooltip label={value as string} withArrow>
-          <Text size="sm" truncate="end" className={key === 'classification' ? 'max-w-48' : 'max-w-64'}>
-            {value as string}
-          </Text>
-        </Tooltip>
-      );
+    if (typeof value === 'string' && value.includes('GMT')) {
+      // Try to format as date if it looks like a date string
+      try {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+          return formatDate(date);
+        }
+      } catch (e) {
+        // If date parsing fails, return as is
+      }
     }
     
-    // Default rendering
-    return <Text size="sm">{String(value)}</Text>;
+    return String(value);
   };
 
   if (loading) {
@@ -243,7 +263,7 @@ export default function DataTable({
               <Text size="lg" fw={600}>Search Results</Text>
             </div>
             <Text size="sm" c="dimmed">
-              {filteredAndSortedData.length} results
+              {sortedData.length} results
               {hasActiveFilters && ' (filtered)'}
             </Text>
           </Group>
@@ -344,45 +364,47 @@ export default function DataTable({
           )}
 
           {/* Table with ScrollArea taking remaining height */}
-          <ScrollArea className="flex-1" type="always" offsetScrollbars>
-            <Table
-                highlightOnHover
-                stickyHeader
-                stickyHeaderOffset={0}
-                classNames={{ thead: 'bg-[#6c7d8c] text-white' }}
-            >
-              <Table.Thead style={{ backgroundColor: '#6c7d8c', color: 'white', position: 'sticky', top: 0, zIndex: 10 }}>
-                <Table.Tr>
-                  {visibleColumns.map(column => (
-                    <Table.Th 
-                      key={String(column.key)}
-                      className={column.sortable ? 'cursor-pointer hover:bg-tmh-gray-bg' : ''}
-                      onClick={column.sortable ? () => handleSort(column.key as SortField) : undefined}
-                      style={{ color: 'white', width: column.width }}
-                    >
-                      <Group gap="xs">
-                        <Text size="sm" fw={500} c="white">{column.header}</Text>
-                        {column.sortable && getSortIcon(column.key as SortField)}
-                      </Group>
-                    </Table.Th>
-                  ))}
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {filteredAndSortedData.map((item) => (
-                  <Table.Tr key={item.id}>
+          <ScrollArea className="flex-1" type="always" offsetScrollbars scrollbarSize={8}>
+            <div className="min-w-max">
+              <Table
+                  highlightOnHover
+                  stickyHeader
+                  stickyHeaderOffset={0}
+                  classNames={{ thead: 'bg-[#6c7d8c] text-white' }}
+              >
+                <Table.Thead style={{ backgroundColor: '#6c7d8c', color: 'white', position: 'sticky', top: 0, zIndex: 10 }}>
+                  <Table.Tr>
                     {visibleColumns.map(column => (
-                      <Table.Td key={`${item.id}-${String(column.key)}`}>
-                        {renderCell(item, column.key)}
-                      </Table.Td>
+                      <Table.Th 
+                        key={String(column.key)}
+                        className={column.sortable ? 'cursor-pointer hover:bg-tmh-gray-bg' : ''}
+                        onClick={column.sortable ? () => handleSort(column.key as SortField) : undefined}
+                        style={{ color: 'white', width: column.width }}
+                      >
+                        <Group gap="xs">
+                          <Text size="sm" fw={500} c="white">{column.header}</Text>
+                          {column.sortable && getSortIcon(column.key as SortField)}
+                        </Group>
+                      </Table.Th>
                     ))}
                   </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
+                </Table.Thead>
+                <Table.Tbody>
+                  {sortedData.map((item) => (
+                    <Table.Tr key={item.id}>
+                      {visibleColumns.map(column => (
+                        <Table.Td key={`${item.id}-${String(column.key)}`}>
+                          {renderCell(item, column.key)}
+                        </Table.Td>
+                      ))}
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </div>
           </ScrollArea>
 
-          {filteredAndSortedData.length === 0 && (
+          {sortedData.length === 0 && (
               <Box className="text-center py-12">
                 <Text size="sm" c="dimmed">
                   {hasActiveFilters ? 'No results match your filters.' : 'No data available.'}
