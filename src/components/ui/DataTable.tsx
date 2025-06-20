@@ -335,7 +335,7 @@ export default function DataTable({
                   }}
                   clearable
                   searchable
-                  icon={<IconFilter size={14} />}
+                  leftSection={<IconFilter size={14} />}
                   size="sm"
                 />
                 <Select
@@ -349,7 +349,7 @@ export default function DataTable({
                   }}
                   clearable
                   searchable
-                  icon={<IconFilter size={14} />}
+                  leftSection={<IconFilter size={14} />}
                   size="sm"
                 />
               </Group>
