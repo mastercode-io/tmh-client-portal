@@ -12,7 +12,7 @@ import { ClientData, SearchItem } from './types';
  * @param data The client data that may contain embedded config
  * @returns Promise resolving to the appropriate TableConfig
  */
-export async function loadTableConfig(data?: ClientData): Promise<TableConfig> {
+export async function loadTableConfig(data?: ClientData | null): Promise<TableConfig> {
   try {
     // 1. Check for embedded config in data
     if (data?.table_config) {
