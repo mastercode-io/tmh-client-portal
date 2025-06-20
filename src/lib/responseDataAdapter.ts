@@ -12,14 +12,17 @@ export function transformResponseData(): ClientData {
   console.log('Response data adapter - Raw data items:', tableData.length);
   
   // Create row items from the table data with minimal transformation
-  const searchData: RowItem[] = tableData.map((item, index) => {
-    // Extract image data if it exists
+  const searchData: RowItem[] = tableData.map((item: any, index) => {
+    // Handle image field separately to avoid type errors
     let imageData: string | undefined = undefined;
-    if (item.image) {
-      if (typeof item.image === 'object' && item.image !== null && 'base64' in item.image) {
-        imageData = (item.image as { base64: string }).base64;
-      } else if (typeof item.image === 'string') {
-        imageData = item.image as string;
+    
+    // Safely extract image data if it exists
+    if (item && item.image !== undefined) {
+      const imgData = item.image;
+      if (typeof imgData === 'object' && imgData !== null && 'base64' in imgData) {
+        imageData = imgData.base64;
+      } else if (typeof imgData === 'string') {
+        imageData = imgData;
       }
     }
     
@@ -30,7 +33,7 @@ export function transformResponseData(): ClientData {
     const rowItem: RowItem = { 
       ...rest, 
       id: item.app_number || `row-${index + 1}`,
-      ...(imageData ? { image: imageData } : {})
+      ...(imageData !== undefined ? { image: imageData } : {})
     };
     
     return rowItem;
