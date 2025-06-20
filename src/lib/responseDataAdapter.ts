@@ -16,10 +16,10 @@ export function transformResponseData(): ClientData {
     // Extract image data if it exists
     let imageData: string | undefined = undefined;
     if (item.image) {
-      if (typeof item.image === 'object' && 'base64' in item.image) {
-        imageData = item.image.base64;
+      if (typeof item.image === 'object' && item.image !== null && 'base64' in item.image) {
+        imageData = (item.image as { base64: string }).base64;
       } else if (typeof item.image === 'string') {
-        imageData = item.image;
+        imageData = item.image as string;
       }
     }
     
