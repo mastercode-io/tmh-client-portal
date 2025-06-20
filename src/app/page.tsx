@@ -1,6 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { Container, Stack, Paper, Group, Text, Badge, Divider } from '@mantine/core';
 import { IconBuilding, IconSearch, IconWorld, IconCalendar } from '@tabler/icons-react';
 import Header from '@/components/layout/Header';
@@ -9,12 +10,28 @@ import DataTable from '@/components/ui/DataTable';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useClientData } from '@/hooks/useClientData';
+import { TableConfig } from '@/lib/tableConfig';
+import { loadTableConfig } from '@/lib/configLoader';
 
 export default function HomePage() {
   const searchParams = useSearchParams();
   const requestId = searchParams.get('id') || searchParams.get('request_id');
   
   const { data, loading, error, refetch } = useClientData(requestId);
+  const [tableConfig, setTableConfig] = useState<TableConfig | undefined>(undefined);
+  
+  // Load table configuration when component mounts
+  useEffect(() => {
+    async function fetchConfig() {
+      try {
+        const config = await loadTableConfig();
+        setTableConfig(config);
+      } catch (error) {
+        console.error('Failed to load table configuration:', error);
+      }
+    }
+    fetchConfig();
+  }, []);
 
   if (!requestId) {
     return (
@@ -173,6 +190,7 @@ export default function HomePage() {
               <DataTable 
                 data={data.search_data} 
                 className="flex-1 overflow-hidden"
+                config={tableConfig}
               />
             </Paper>
           </Stack>

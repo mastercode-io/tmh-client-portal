@@ -9,17 +9,17 @@ import { isValidBase64Image } from '@/lib/utils';
 import { IconPhoto } from '@tabler/icons-react';
 
 // Empty cell component
-const EmptyCell = () => {
-  return <div style={{ width: '40px', height: '40px' }} />;
+const EmptyCell = ({ width, height }) => {
+  return <div style={{ width: `${width}px`, height: `${height}px` }} />;
 };
 
 // Placeholder component
-const Placeholder = () => {
+const Placeholder = ({ width, height }) => {
   return (
     <div
       style={{
-        width: '40px',
-        height: '40px',
+        width: `${width}px`,
+        height: `${height}px`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -36,21 +36,30 @@ interface ImageCellProps {
   src?: string;
   alt?: string;
   className?: string;
-  size?: number;
+  width?: number;
+  height?: number;
+  modalSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export default function ImageCell({ src, alt = 'Image', className, size = 40 }: ImageCellProps) {
+export default function ImageCell({ 
+  src, 
+  alt = 'Image', 
+  className, 
+  width = 100, 
+  height = 50,
+  modalSize = 'md'
+}: ImageCellProps) {
   const [opened, { open, close }] = useDisclosure(false);
   const [imageError, setImageError] = useState(false);
 
   // If no image source is provided, show an empty cell
   if (!src) {
-    return <EmptyCell />;
+    return <EmptyCell width={width} height={height} />;
   }
 
   // If image validation fails or there was an error loading the image, show placeholder
   if (!isValidBase64Image(src) || imageError) {
-    return <Placeholder />;
+    return <Placeholder width={width} height={height} />;
   }
 
   // Determine if this is a base64 image or a URL
@@ -63,7 +72,7 @@ export default function ImageCell({ src, alt = 'Image', className, size = 40 }: 
           'relative rounded-md overflow-hidden border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity',
           className
         )}
-        style={{ width: size, height: size }}
+        style={{ width: `${width}px`, height: `${height}px` }}
         onClick={open}
       >
         {isBase64 ? (
@@ -71,7 +80,7 @@ export default function ImageCell({ src, alt = 'Image', className, size = 40 }: 
           <img
             src={src}
             alt={alt}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
             onError={(e) => {
               console.error('Image loading error (img tag):', e);
               setImageError(true);
@@ -83,12 +92,12 @@ export default function ImageCell({ src, alt = 'Image', className, size = 40 }: 
             src={src}
             alt={alt}
             fill
-            className="object-cover"
+            className="object-contain"
             onError={(e) => {
               console.error('Image loading error (Next.js):', e);
               setImageError(true);
             }}
-            sizes={`${size}px`}
+            sizes={`${Math.max(width, height)}px`}
           />
         )}
         <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
@@ -100,11 +109,11 @@ export default function ImageCell({ src, alt = 'Image', className, size = 40 }: 
         opened={opened}
         onClose={close}
         title="Image Preview"
-        size="md"
+        size={modalSize}
         centered
       >
         <Box className="flex justify-center">
-          <div className="relative w-64 h-64">
+          <div className="relative w-full" style={{ height: '400px' }}>
             {isBase64 ? (
               // Use regular img tag for base64 data in modal
               <img
@@ -120,7 +129,7 @@ export default function ImageCell({ src, alt = 'Image', className, size = 40 }: 
                 alt={alt}
                 fill
                 className="object-contain rounded-md"
-                sizes="256px"
+                sizes="100vw"
               />
             )}
           </div>

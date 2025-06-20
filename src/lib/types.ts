@@ -14,7 +14,6 @@ export interface SearchItem {
   remarks: string;
   image?: string; // base64 encoded image
   classification: string;
-  created_date: string;
 }
 
 export interface ClientData {

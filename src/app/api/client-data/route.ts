@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMockDataById } from '@/lib/mockData';
+import { getResponseDataById } from '@/lib/responseDataAdapter';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+
+    console.log('Next.js API route - client-data - Request ID:', id);
 
     if (!id) {
       return NextResponse.json(
@@ -16,8 +18,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get mock data based on ID
-    const clientData = getMockDataById(id);
+    // Get data from response.json file based on ID
+    const clientData = getResponseDataById(id);
+    
+    console.log('Next.js API route - Data retrieved:', 
+      clientData ? 
+      `Success - ${clientData.search_data.length} items found` : 
+      'No data found');
 
     if (!clientData) {
       return NextResponse.json(

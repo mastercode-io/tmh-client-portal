@@ -23,25 +23,44 @@ import {
 import { SearchItem } from '@/lib/types';
 import { formatDate, cn } from '@/lib/utils';
 import ImageCell from './ImageCell';
+import { TableConfig, defaultTableConfig, generateConfigFromData } from '@/lib/tableConfig';
 
 interface DataTableProps {
   data: SearchItem[];
   loading?: boolean;
   className?: string;
+  config?: TableConfig; // New prop for configuration
 }
 
 type SortField = keyof SearchItem;
 type SortDirection = 'asc' | 'desc';
 
 export default function DataTable({
-                                    data,
-                                    loading = false,
-                                    className
-                                  }: DataTableProps) {
-  const [sortField, setSortField] = useState<SortField>('created_date');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  data,
+  loading = false,
+  className,
+  config
+}: DataTableProps) {
+  // Use provided config or generate one from data
+  const tableConfig = useMemo(() => {
+    if (config) return config;
+    return generateConfigFromData(data);
+  }, [data, config]);
+
+  // Use config for initial state
+  const [sortField, setSortField] = useState<SortField | null>(
+    tableConfig.defaultSort?.field || null
+  );
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    tableConfig.defaultSort?.direction || 'desc'
+  );
   const [criteriaFilter, setCriteriaFilter] = useState<string[]>([]);
   const [classificationFilter, setClassificationFilter] = useState<string[]>([]);
+
+  // Get visible columns from config
+  const visibleColumns = useMemo(() => {
+    return tableConfig.columns.filter(col => col.visible);
+  }, [tableConfig.columns]);
 
   const criteriaOptions = useMemo(() => {
     const unique = Array.from(new Set(data.map(item => item.search_criteria)));
@@ -55,6 +74,32 @@ export default function DataTable({
       label: classification
     }));
   }, [data]);
+
+  // Helper function for consistent value comparison
+  const compareValues = (aValue: any, bValue: any, direction: SortDirection) => {
+    // Equal values
+    if (aValue === bValue) return 0;
+    
+    // Handle null/undefined values - but don't prioritize rows with images
+    // This is the key fix for the image sorting issue
+    if (aValue === null || aValue === undefined) {
+      if (bValue === null || bValue === undefined) return 0;
+      return direction === 'asc' ? 1 : -1;
+    }
+    if (bValue === null || bValue === undefined) {
+      return direction === 'asc' ? -1 : 1;
+    }
+    
+    // String comparison
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      const comparison = aValue.localeCompare(bValue);
+      return direction === 'asc' ? comparison : -comparison;
+    }
+    
+    // Numeric/other comparison
+    const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+    return direction === 'asc' ? comparison : -comparison;
+  };
 
   const filteredAndSortedData = useMemo(() => {
     let filtered = data;
@@ -76,20 +121,24 @@ export default function DataTable({
     }
 
     // Apply sorting
-    return filtered.sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
+    if (sortField) {
+      return filtered.sort((a, b) => {
+        // Get values for sorting
+        const aValue = a[sortField];
+        const bValue = b[sortField];
 
-      if (aValue === undefined && bValue === undefined) return 0;
-      if (aValue === undefined) return 1;
-      if (bValue === undefined) return -1;
+        // Handle special cases for certain fields
+        if (sortField === 'image') {
+          // For image field, we'll sort by search_term instead
+          return compareValues(a['search_term'], b['search_term'], sortDirection);
+        }
 
-      let comparison = 0;
-      if (aValue < bValue) comparison = -1;
-      if (aValue > bValue) comparison = 1;
+        // Handle standard comparison
+        return compareValues(aValue, bValue, sortDirection);
+      });
+    }
 
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
+    return filtered;
   }, [data, sortField, sortDirection, criteriaFilter, classificationFilter]);
 
   const handleSort = (field: SortField) => {
@@ -123,6 +172,58 @@ export default function DataTable({
     return colors[criteria] || 'gray';
   };
 
+  // Helper function to render the appropriate cell based on column key
+  const renderCell = (item: SearchItem, columnKey: string | keyof SearchItem) => {
+    if (columnKey === 'image') {
+      return (
+        <ImageCell 
+          src={item.image} 
+          alt={`Image for ${item.search_term}`}
+          width={tableConfig.imageCell.width}
+          height={tableConfig.imageCell.height}
+          modalSize={tableConfig.imageCell.modalSize}
+        />
+      );
+    }
+    
+    const key = columnKey as keyof SearchItem;
+    const value = item[key];
+    
+    // Render different cell types based on the data
+    if (key === 'search_criteria') {
+      return (
+        <Badge
+          color={getCriteriaColor(value as string)}
+          variant="light"
+          size="sm"
+        >
+          {value as string}
+        </Badge>
+      );
+    }
+    
+    if (key === 'created_date') {
+      return (
+        <Text size="sm" c="dimmed">
+          {formatDate(value as string)}
+        </Text>
+      );
+    }
+
+    if (key === 'remarks' || key === 'classification') {
+      return (
+        <Tooltip label={value as string} withArrow>
+          <Text size="sm" truncate="end" className={key === 'classification' ? 'max-w-48' : 'max-w-64'}>
+            {value as string}
+          </Text>
+        </Tooltip>
+      );
+    }
+    
+    // Default rendering
+    return <Text size="sm">{String(value)}</Text>;
+  };
+
   if (loading) {
     return (
         <div className={cn('p-6 flex flex-col', className)}>
@@ -147,6 +248,101 @@ export default function DataTable({
             </Text>
           </Group>
 
+          {/* Filters */}
+          {tableConfig.enableFiltering && (
+            <Group position="apart" className="pb-2">
+              <Group>
+                <Select
+                  placeholder="Filter by criteria"
+                  data={criteriaOptions}
+                  value={null}
+                  onChange={(value) => {
+                    if (value && !criteriaFilter.includes(value)) {
+                      setCriteriaFilter([...criteriaFilter, value]);
+                    }
+                  }}
+                  clearable
+                  searchable
+                  icon={<IconFilter size={14} />}
+                  size="sm"
+                />
+                <Select
+                  placeholder="Filter by classification"
+                  data={classificationOptions}
+                  value={null}
+                  onChange={(value) => {
+                    if (value && !classificationFilter.includes(value)) {
+                      setClassificationFilter([...classificationFilter, value]);
+                    }
+                  }}
+                  clearable
+                  searchable
+                  icon={<IconFilter size={14} />}
+                  size="sm"
+                />
+              </Group>
+              
+              {hasActiveFilters && (
+                <ActionIcon 
+                  variant="subtle" 
+                  onClick={clearFilters}
+                  title="Clear all filters"
+                >
+                  <IconFilterOff size={16} />
+                </ActionIcon>
+              )}
+            </Group>
+          )}
+
+          {/* Active filters */}
+          {hasActiveFilters && (
+            <Group className="flex-wrap gap-2 pb-2">
+              {criteriaFilter.map(filter => (
+                <Badge 
+                  key={filter} 
+                  color={getCriteriaColor(filter)}
+                  variant="light"
+                  size="sm"
+                  rightSection={
+                    <ActionIcon 
+                      size="xs" 
+                      color="blue" 
+                      radius="xl" 
+                      variant="transparent"
+                      onClick={() => setCriteriaFilter(criteriaFilter.filter(f => f !== filter))}
+                    >
+                      ×
+                    </ActionIcon>
+                  }
+                >
+                  {filter}
+                </Badge>
+              ))}
+              
+              {classificationFilter.map(filter => (
+                <Badge 
+                  key={filter} 
+                  color="gray"
+                  variant="light"
+                  size="sm"
+                  rightSection={
+                    <ActionIcon 
+                      size="xs" 
+                      color="blue" 
+                      radius="xl" 
+                      variant="transparent"
+                      onClick={() => setClassificationFilter(classificationFilter.filter(f => f !== filter))}
+                    >
+                      ×
+                    </ActionIcon>
+                  }
+                >
+                  {filter}
+                </Badge>
+              ))}
+            </Group>
+          )}
+
           {/* Table with ScrollArea taking remaining height */}
           <ScrollArea className="flex-1" type="always" offsetScrollbars>
             <Table
@@ -157,90 +353,30 @@ export default function DataTable({
             >
               <Table.Thead style={{ backgroundColor: '#6c7d8c', color: 'white', position: 'sticky', top: 0, zIndex: 10 }}>
                 <Table.Tr>
-                  <Table.Th style={{ color: 'white' }}>Image</Table.Th>
-                  <Table.Th
-                      className="cursor-pointer hover:bg-tmh-gray-bg"
-                      onClick={() => handleSort('search_term')}
-                      style={{ color: 'white' }}
-                  >
-                    <Group gap="xs">
-                      <Text size="sm" fw={500} c="white">Search Term</Text>
-                      {getSortIcon('search_term')}
-                    </Group>
-                  </Table.Th>
-                  <Table.Th
-                      className="cursor-pointer hover:bg-tmh-gray-bg"
-                      onClick={() => handleSort('search_criteria')}
-                      style={{ color: 'white' }}
-                  >
-                    <Group gap="xs">
-                      <Text size="sm" fw={500} c="white">Criteria</Text>
-                      {getSortIcon('search_criteria')}
-                    </Group>
-                  </Table.Th>
-                  <Table.Th
-                      className="cursor-pointer hover:bg-tmh-gray-bg"
-                      onClick={() => handleSort('classification')}
-                      style={{ color: 'white' }}
-                  >
-                    <Group gap="xs">
-                      <Text size="sm" fw={500} c="white">Classification</Text>
-                      {getSortIcon('classification')}
-                    </Group>
-                  </Table.Th>
-                  <Table.Th style={{ color: 'white' }}>Remarks</Table.Th>
-                  <Table.Th
-                      className="cursor-pointer hover:bg-tmh-gray-bg"
-                      onClick={() => handleSort('created_date')}
-                      style={{ color: 'white' }}
-                  >
-                    <Group gap="xs">
-                      <Text size="sm" fw={500} c="white">Created</Text>
-                      {getSortIcon('created_date')}
-                    </Group>
-                  </Table.Th>
+                  {visibleColumns.map(column => (
+                    <Table.Th 
+                      key={String(column.key)}
+                      className={column.sortable ? 'cursor-pointer hover:bg-tmh-gray-bg' : ''}
+                      onClick={column.sortable ? () => handleSort(column.key as SortField) : undefined}
+                      style={{ color: 'white', width: column.width }}
+                    >
+                      <Group gap="xs">
+                        <Text size="sm" fw={500} c="white">{column.header}</Text>
+                        {column.sortable && getSortIcon(column.key as SortField)}
+                      </Group>
+                    </Table.Th>
+                  ))}
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
                 {filteredAndSortedData.map((item) => (
-                    <Table.Tr key={item.id}>
-                      <Table.Td>
-                        <ImageCell src={item.image} alt={`Image for ${item.search_term}`} />
+                  <Table.Tr key={item.id}>
+                    {visibleColumns.map(column => (
+                      <Table.Td key={`${item.id}-${String(column.key)}`}>
+                        {renderCell(item, column.key)}
                       </Table.Td>
-                      <Table.Td>
-                        <Text size="sm" fw={500}>
-                          {item.search_term}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge
-                            color={getCriteriaColor(item.search_criteria)}
-                            variant="light"
-                            size="sm"
-                        >
-                          {item.search_criteria}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Tooltip label={item.classification} withArrow>
-                          <Text size="sm" truncate="end" className="max-w-48">
-                            {item.classification}
-                          </Text>
-                        </Tooltip>
-                      </Table.Td>
-                      <Table.Td>
-                        <Tooltip label={item.remarks} withArrow>
-                          <Text size="sm" truncate="end" className="max-w-64">
-                            {item.remarks}
-                          </Text>
-                        </Tooltip>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm" c="dimmed">
-                          {formatDate(item.created_date)}
-                        </Text>
-                      </Table.Td>
-                    </Table.Tr>
+                    ))}
+                  </Table.Tr>
                 ))}
               </Table.Tbody>
             </Table>

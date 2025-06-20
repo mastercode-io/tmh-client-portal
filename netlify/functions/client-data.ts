@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { mockClientData, getMockDataById } from '../../src/lib/mockData';
+import { getResponseDataById } from '../../src/lib/responseDataAdapter';
 
 export const handler: Handler = async (event, context) => {
   // Set CORS headers
@@ -45,8 +45,8 @@ export const handler: Handler = async (event, context) => {
       };
     }
 
-    // Get mock data based on ID
-    const clientData = getMockDataById(id);
+    // Get data from response.json file based on ID
+    const clientData = getResponseDataById(id);
 
     if (!clientData) {
       return {

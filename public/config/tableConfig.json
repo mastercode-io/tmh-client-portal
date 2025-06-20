@@ -1,0 +1,18 @@
+{
+  "columns": [
+    { "key": "image", "header": "Image", "visible": true },
+    { "key": "search_term", "header": "Search Term", "visible": true, "sortable": true },
+    { "key": "search_criteria", "header": "Criteria", "visible": true, "sortable": true },
+    { "key": "classification", "header": "Classification", "visible": true, "sortable": true },
+    { "key": "remarks", "header": "Remarks", "visible": true }
+  ],
+  "imageCell": {
+    "width": 100,
+    "height": 50,
+    "modalSize": "md"
+  },
+  "defaultSort": {
+    "direction": "desc"
+  },
+  "enableFiltering": true
+}
