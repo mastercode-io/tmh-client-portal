@@ -13,13 +13,25 @@ export function transformResponseData(): ClientData {
   
   // Create row items from the table data with minimal transformation
   const searchData: RowItem[] = tableData.map((item, index) => {
-    // Add an id if not present
-    const rowItem: RowItem = { ...item, id: item.app_number || `row-${index + 1}` };
-    
-    // Handle image field if it exists (extract base64 from object)
-    if (item.image && typeof item.image === 'object' && 'base64' in item.image) {
-      rowItem.image = item.image.base64;
+    // Extract image data if it exists
+    let imageData: string | undefined = undefined;
+    if (item.image) {
+      if (typeof item.image === 'object' && 'base64' in item.image) {
+        imageData = item.image.base64;
+      } else if (typeof item.image === 'string') {
+        imageData = item.image;
+      }
     }
+    
+    // Create a new object without the image property
+    const { image, ...rest } = item;
+    
+    // Add an id if not present and include the properly formatted image
+    const rowItem: RowItem = { 
+      ...rest, 
+      id: item.app_number || `row-${index + 1}`,
+      ...(imageData ? { image: imageData } : {})
+    };
     
     return rowItem;
   });
