@@ -8,14 +8,18 @@
 
 ## UI Component Library
 
-- **Mantine** - Comprehensive React component library with 100+ modern, accessible components including:
-- Advanced tables with sorting and filtering
-- File upload with drag-and-drop functionality
-- Form components with built-in validation
-- Data visualization and charts
-- Navigation and layout components
-- Modal dialogs, notifications, and feedback components
+- **Mantine v7.12.2** - Comprehensive React component library with 100+ modern, accessible components including:
+  - Advanced tables with sorting and filtering
+  - File upload with drag-and-drop functionality
+  - Form components with built-in validation
+  - Data visualization and charts
+  - Navigation and layout components
+  - Modal dialogs, notifications, and feedback components
 - **MIT Licensed** - Free for commercial use with optional premium components for enterprise features
+- **Important API Notes**:
+  - Mantine v7 has significant API changes from v6
+  - Key changes: `position` → `justify`, `icon`/`rightIcon` → `leftSection`/`rightSection`, removal of `compact` prop
+  - Always refer to [official Mantine v7 documentation](https://mantine.dev/) when implementing components
 
 ## Styling & Design
 

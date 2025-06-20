@@ -1,7 +1,7 @@
 'use client';
 
 import { TableConfig, defaultTableConfig, generateConfigFromData } from './tableConfig';
-import { ClientData, SearchItem } from './types';
+import { ClientData } from './types';
 
 /**
  * Loads table configuration based on priority order:
