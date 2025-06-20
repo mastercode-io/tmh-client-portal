@@ -91,9 +91,8 @@ export function ExpandableCell({
           <Button 
             variant="subtle" 
             size="xs" 
-            compact 
             onClick={toggleExpand}
-            leftIcon={expanded ? <IconMinimize size={12} /> : <IconMaximize size={12} />}
+            leftSection={expanded ? <IconMinimize size={12} /> : <IconMaximize size={12} />}
           >
             {expanded ? 'Collapse' : 'Expand'}
           </Button>
@@ -102,9 +101,8 @@ export function ExpandableCell({
             <Button 
               variant="subtle" 
               size="xs" 
-              compact 
               onClick={openModal}
-              leftIcon={<IconMaximize size={12} />}
+              leftSection={<IconMaximize size={12} />}
             >
               Full View
             </Button>
