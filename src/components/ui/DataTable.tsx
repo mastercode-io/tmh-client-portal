@@ -24,7 +24,8 @@ import { cn } from '@/lib/utils';
 import { RowItem, TableConfig } from '@/lib/types';
 import { ImageCell } from './ImageCell';
 import { ExpandableCell } from './ExpandableCell';
-import { formatDate, generateConfigFromData, defaultTableConfig } from '@/lib/tableConfig';
+import { generateConfigFromData, defaultTableConfig } from '@/lib/tableConfig';
+import { formatDate } from '@/lib/utils';
 
 interface DataTableProps {
   data: RowItem[];
@@ -239,7 +240,7 @@ export default function DataTable({
       try {
         const date = new Date(value);
         if (!isNaN(date.getTime())) {
-          return formatDate(date);
+          return formatDate(date.toISOString());
         }
       } catch (e) {
         // If date parsing fails, return as is
