@@ -9,12 +9,17 @@ import { isValidBase64Image } from '@/lib/utils';
 import { IconPhoto } from '@tabler/icons-react';
 
 // Empty cell component
-const EmptyCell = ({ width, height }) => {
+interface CellDimensionProps {
+  width: number;
+  height: number;
+}
+
+const EmptyCell = ({ width, height }: CellDimensionProps) => {
   return <div style={{ width: `${width}px`, height: `${height}px` }} />;
 };
 
 // Placeholder component
-const Placeholder = ({ width, height }) => {
+const Placeholder = ({ width, height }: CellDimensionProps) => {
   return (
     <div
       style={{
