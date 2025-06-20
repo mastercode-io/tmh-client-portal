@@ -1,4 +1,4 @@
-import { RowItem, TableConfig } from './types';
+import { RowItem, TableConfig as TypesTableConfig } from './types';
 
 /**
  * Configuration for a table column
@@ -23,23 +23,9 @@ export interface ImageCellConfig {
 }
 
 /**
- * Complete table configuration
- */
-export interface TableConfig {
-  columns: ColumnConfig[];
-  imageCell: ImageCellConfig;
-  defaultSort?: {
-    field?: string;
-    direction: 'asc' | 'desc';
-  };
-  enableFiltering: boolean;
-  preserveColumnOrder?: boolean; // New option to preserve column order from data
-}
-
-/**
  * Default table configuration used as a fallback
  */
-export const defaultTableConfig: TableConfig = {
+export const defaultTableConfig: TypesTableConfig = {
   columns: [
     { key: 'id', header: 'ID', visible: true, sortable: true, width: 100 },
     { key: 'app_number', header: 'Application Number', visible: true, sortable: true, width: 150 },
@@ -65,7 +51,7 @@ export const defaultTableConfig: TableConfig = {
  * Generates a table configuration based on the data structure
  * Analyzes the data to determine column types and creates appropriate configuration
  */
-export function generateConfigFromData(data: RowItem[]): TableConfig {
+export function generateConfigFromData(data: RowItem[]): TypesTableConfig {
   if (!data || data.length === 0) {
     return defaultTableConfig;
   }
@@ -173,7 +159,7 @@ function formatColumnHeader(key: string): string {
  * @param rawData The raw JSON data to analyze
  * @returns A generated TableConfig object
  */
-export function generateTableConfigFromRawData(rawData: any): TableConfig {
+export function generateTableConfigFromRawData(rawData: any): TypesTableConfig {
   // Extract the table data from the response
   const tableData = rawData.extracted_data?.auto_detected_table_1 || [];
   
@@ -234,9 +220,9 @@ export function generateTableConfigFromRawData(rawData: any): TableConfig {
  */
 export function resolveTableConfig(
   data: RowItem[] | undefined, 
-  apiConfig?: TableConfig,
-  loadedConfig?: TableConfig
-): TableConfig {
+  apiConfig?: TypesTableConfig,
+  loadedConfig?: TypesTableConfig
+): TypesTableConfig {
   // Priority 1: Configuration from API response
   if (apiConfig) {
     return apiConfig;
