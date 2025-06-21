@@ -1,4 +1,5 @@
 import { RowItem, TableConfig as TypesTableConfig } from './types';
+export { TableConfig } from './types'; // Re-export TableConfig for other files to import
 
 /**
  * Configuration for a table column

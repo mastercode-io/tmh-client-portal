@@ -10,7 +10,7 @@ import DataTable from '@/components/ui/DataTable';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useClientData } from '@/hooks/useClientData';
-import { TableConfig } from '@/lib/tableConfig';
+import { TableConfig } from '@/lib/types';
 import { loadTableConfig } from '@/lib/configLoader';
 
 export default function HomePage() {
