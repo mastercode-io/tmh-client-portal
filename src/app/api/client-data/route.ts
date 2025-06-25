@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getResponseDataById } from '@/lib/responseDataAdapter';
+import { transformMultiTabData } from '@/lib/responseDataAdapter';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const multiTab = searchParams.get('multi_tab') === 'true';
 
     console.log('Next.js API route - client-data - Request ID:', id);
+    console.log('Next.js API route - Multi-tab mode:', multiTab);
 
     if (!id) {
       return NextResponse.json(
@@ -18,13 +21,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get data from response.json file based on ID
-    const clientData = getResponseDataById(id);
+    let clientData;
     
-    console.log('Next.js API route - Data retrieved:', 
-      clientData ? 
-      `Success - ${clientData.search_data.length} items found` : 
-      'No data found');
+    if (multiTab) {
+      // Return multi-tab data
+      clientData = transformMultiTabData();
+      console.log('Next.js API route - Multi-tab data retrieved:', 
+        `${clientData.tabs.length} tabs with ${clientData.tabs.reduce((acc, tab) => acc + tab.data.length, 0)} total items`);
+    } else {
+      // Return single-tab data (existing behavior)
+      clientData = getResponseDataById(id);
+      console.log('Next.js API route - Single-tab data retrieved:', 
+        clientData ? 
+        `Success - ${clientData.search_data.length} items found` : 
+        'No data found');
+    }
 
     if (!clientData) {
       return NextResponse.json(

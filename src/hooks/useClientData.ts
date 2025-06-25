@@ -1,10 +1,16 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ClientData, UseClientDataReturn } from '@/lib/types';
+import { ClientData, MultiTabClientData, UseClientDataReturn } from '@/lib/types';
 
-export function useClientData(requestId: string | null): UseClientDataReturn {
-  const [data, setData] = useState<ClientData | null>(null);
+// Extended return type for multi-tab support
+export interface UseMultiTabClientDataReturn extends Omit<UseClientDataReturn, 'data'> {
+  data: ClientData | MultiTabClientData | null;
+  isMultiTab: boolean;
+}
+
+export function useClientData(requestId: string | null, multiTab: boolean = false): UseMultiTabClientDataReturn {
+  const [data, setData] = useState<ClientData | MultiTabClientData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,9 +24,15 @@ export function useClientData(requestId: string | null): UseClientDataReturn {
     setError(null);
 
     console.log('useClientData - Fetching data for request ID:', requestId);
+    console.log('useClientData - Multi-tab mode:', multiTab);
 
     try {
-      const url = `/api/client-data?id=${encodeURIComponent(requestId)}`;
+      const params = new URLSearchParams({ id: requestId });
+      if (multiTab) {
+        params.append('multi_tab', 'true');
+      }
+      
+      const url = `/api/client-data?${params.toString()}`;
       console.log('useClientData - Fetch URL:', url);
       
       const response = await fetch(url);
@@ -33,7 +45,11 @@ export function useClientData(requestId: string | null): UseClientDataReturn {
       console.log('useClientData - API Response:', {
         success: result.success,
         hasData: !!result.data,
-        itemCount: result.data?.search_data?.length || 0
+        isMultiTab: multiTab,
+        tabCount: multiTab ? result.data?.tabs?.length : undefined,
+        itemCount: multiTab 
+          ? result.data?.tabs?.reduce((acc: number, tab: any) => acc + tab.data.length, 0) 
+          : result.data?.search_data?.length || 0
       });
       
       if (result.success) {
@@ -49,7 +65,7 @@ export function useClientData(requestId: string | null): UseClientDataReturn {
     } finally {
       setLoading(false);
     }
-  }, [requestId]);
+  }, [requestId, multiTab]);
 
   useEffect(() => {
     fetchData();
@@ -65,5 +81,6 @@ export function useClientData(requestId: string | null): UseClientDataReturn {
     loading,
     error,
     refetch,
+    isMultiTab: multiTab,
   };
 }

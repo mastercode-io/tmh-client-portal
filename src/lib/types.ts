@@ -13,10 +13,55 @@ export interface RowItem {
   image?: string; // base64 encoded image
 }
 
+// New multi-tab interfaces
+export interface TabMetadata {
+  data_types_detected: string[];
+  extracted_rows: number;
+  extraction_method: string;
+  total_columns: number;
+  total_rows: number;
+}
+
+export interface TabData {
+  extracted_data: {
+    [key: string]: any; // Can contain key-value pairs or table arrays
+  };
+  metadata: TabMetadata;
+  sheet_name: string;
+  success: boolean;
+}
+
+export interface MultiTabApiResponse {
+  success: boolean;
+  summary: {
+    processing_time_ms: number;
+    sheets_not_found: number;
+    sheets_processed: number;
+    sheets_with_errors: number;
+    timestamp: string;
+    total_sheets_requested: number;
+  };
+  tabs: TabData[];
+}
+
+export interface ProcessedTabData {
+  name: string;
+  data: RowItem[];
+  hasData: boolean;
+  metadata: TabMetadata;
+}
+
 export interface ClientData {
   client_info: ClientInfo;
   search_data: RowItem[];
   table_config?: TableConfig; // Optional embedded configuration
+}
+
+// New multi-tab client data interface
+export interface MultiTabClientData {
+  client_info: ClientInfo;
+  tabs: ProcessedTabData[];
+  table_config?: TableConfig;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -42,6 +87,15 @@ export interface UseClientDataReturn {
   loading: boolean;
   error: string | null;
   refetch: () => void;
+}
+
+// Extended return type for multi-tab support
+export interface UseMultiTabClientDataReturn {
+  data: ClientData | MultiTabClientData | null;
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+  isMultiTab: boolean;
 }
 
 export interface UseTableReturn {

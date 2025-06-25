@@ -7,25 +7,31 @@ import { IconBuilding, IconSearch, IconWorld, IconCalendar } from '@tabler/icons
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import DataTable from '@/components/ui/DataTable';
+import TabsContainer from '@/components/ui/TabsContainer';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useClientData } from '@/hooks/useClientData';
-import { TableConfig } from '@/lib/types';
+import { TableConfig, ClientData, MultiTabClientData } from '@/lib/types';
 import { loadTableConfig } from '@/lib/configLoader';
 
 export default function HomePage() {
   const searchParams = useSearchParams();
   const requestId = searchParams.get('id') || searchParams.get('request_id');
+  const multiTabMode = searchParams.get('tabs') === 'true';
   
-  const { data, loading, error, refetch } = useClientData(requestId);
+  const { data, loading, error, refetch, isMultiTab } = useClientData(requestId, multiTabMode);
   const [tableConfig, setTableConfig] = useState<TableConfig | undefined>(undefined);
   
   // Load table configuration when component mounts or data changes
   useEffect(() => {
     async function fetchConfig() {
       try {
-        const config = await loadTableConfig(data);
-        setTableConfig(config);
+        // Only generate config for single-tab mode
+        // Multi-tab mode: each DataTable will generate its own config from its own data
+        if (!isMultiTab && data && 'search_data' in data) {
+          const config = await loadTableConfig(data as ClientData);
+          setTableConfig(config);
+        }
       } catch (error) {
         console.error('Failed to load table configuration:', error);
       }
@@ -34,7 +40,7 @@ export default function HomePage() {
     if (data) {
       fetchConfig();
     }
-  }, [data]);
+  }, [data, isMultiTab]);
 
   if (!requestId) {
     return (
@@ -44,7 +50,7 @@ export default function HomePage() {
           <Container size="xl" className="py-8">
             <ErrorMessage
               title="Missing Request ID"
-              message="Please provide a valid request ID in the URL parameter. Example: ?id=sample-client-123"
+              message="Please provide a valid request ID in the URL parameter. Example: ?id=sample-client-123&tabs=true for multi-tab view"
             />
           </Container>
         </div>
@@ -59,7 +65,7 @@ export default function HomePage() {
         <Header />
         <div className="flex-1 bg-[#f8fafc] overflow-hidden">
           <Container size="xl" className="py-8">
-            <LoadingSpinner centered message="Loading client data..." />
+            <LoadingSpinner centered message={`Loading ${isMultiTab ? 'multi-tab ' : ''}client data...`} />
           </Container>
         </div>
         <Footer />
@@ -103,6 +109,15 @@ export default function HomePage() {
     );
   }
 
+  // Type guards
+  const isSingleTabData = (data: ClientData | MultiTabClientData): data is ClientData => {
+    return 'search_data' in data;
+  };
+
+  const isMultiTabData = (data: ClientData | MultiTabClientData): data is MultiTabClientData => {
+    return 'tabs' in data;
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <Header clientName={data.client_info.client_name} />
@@ -117,6 +132,11 @@ export default function HomePage() {
                 <Text size="lg" fw={600}>
                   Client Information
                 </Text>
+                {isMultiTab && (
+                  <Badge size="sm" variant="light" color="yellow">
+                    Multi-Tab View
+                  </Badge>
+                )}
               </Group>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -188,13 +208,20 @@ export default function HomePage() {
               </div>
             </Paper>
 
-            {/* Search Results Table */}
+            {/* Search Results - Either Tabs or Single Table */}
             <Paper p="lg" className="animate-slide-up flex-1 overflow-hidden flex flex-col">
-              <DataTable 
-                data={data.search_data} 
-                className="flex-1 overflow-hidden"
-                config={tableConfig}
-              />
+              {isMultiTab && isMultiTabData(data) ? (
+                <TabsContainer 
+                  tabs={data.tabs}
+                  className="flex-1"
+                />
+              ) : isSingleTabData(data) ? (
+                <DataTable 
+                  data={data.search_data} 
+                  className="flex-1 overflow-hidden"
+                  config={tableConfig}
+                />
+              ) : null}
             </Paper>
           </Stack>
         </Container>
