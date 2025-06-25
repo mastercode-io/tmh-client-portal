@@ -131,15 +131,37 @@ export default function DataTable({
       viewport = scrollArea;
     }
 
-    // Check initially with a small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
+    // Multiple timing checks to catch different render phases
+    const timer1 = setTimeout(() => {
       checkScrollIndicators();
-    }, 100);
+    }, 50);
 
-    // Also check after a longer delay in case content is still loading
-    const longerTimer = setTimeout(() => {
+    const timer2 = setTimeout(() => {
       checkScrollIndicators();
-    }, 500);
+    }, 150);
+
+    const timer3 = setTimeout(() => {
+      checkScrollIndicators();
+    }, 300);
+
+    const timer4 = setTimeout(() => {
+      checkScrollIndicators();
+    }, 600);
+
+    // Check on next animation frame to ensure layout is complete
+    const animationFrame = requestAnimationFrame(() => {
+      checkScrollIndicators();
+    });
+
+    // Add ResizeObserver to detect when table content changes size
+    const resizeObserver = new ResizeObserver(() => {
+      checkScrollIndicators();
+    });
+
+    const tableContainer = tableContainerRef.current;
+    if (tableContainer) {
+      resizeObserver.observe(tableContainer);
+    }
 
     // Add scroll listener to the viewport
     viewport.addEventListener('scroll', checkScrollIndicators);
@@ -148,8 +170,12 @@ export default function DataTable({
     window.addEventListener('resize', checkScrollIndicators);
 
     return () => {
-      clearTimeout(timer);
-      clearTimeout(longerTimer);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      clearTimeout(timer4);
+      cancelAnimationFrame(animationFrame);
+      resizeObserver.disconnect();
       viewport.removeEventListener('scroll', checkScrollIndicators);
       window.removeEventListener('resize', checkScrollIndicators);
     };
@@ -228,6 +254,18 @@ export default function DataTable({
 
     return filteredData;
   }, [filteredData, sortField, sortDirection]);
+
+  // Additional effect to check scroll indicators when table data is ready
+  useEffect(() => {
+    if (sortedData.length > 0) {
+      // Small delay to ensure table has rendered with the new data
+      const timer = setTimeout(() => {
+        checkScrollIndicators();
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [sortedData, checkScrollIndicators]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
