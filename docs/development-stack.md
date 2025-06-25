@@ -28,6 +28,20 @@
 - **Responsive Design** - Mobile-first approach with breakpoint-based layouts
 - **Dark/Light Theme Support** - Built-in theme switching capabilities
 
+## TypeScript Configuration & Best Practices
+
+- **Strict Mode** - TypeScript is configured with strict type checking for production builds
+- **isolatedModules** - Enabled by default in Next.js, requires using `export type` when re-exporting types
+- **Type Organization**:
+  - Central type definitions are located in `src/lib/types.ts`
+  - Avoid duplicate interface definitions across files
+  - Use type aliases when importing to avoid naming conflicts (e.g., `import { Type as AliasType }`)
+- **Common Pitfalls**:
+  - Always provide explicit type annotations for function parameters to avoid "implicit any" errors
+  - When handling complex object structures like images, ensure proper type narrowing before assignment
+  - Exclude unused files from the build process by moving them to a separate directory outside of `src`
+  - Maintain a single source of truth for interfaces and types
+
 ## Development Tools
 
 - **ESLint & Prettier** - Code quality and formatting enforcement
