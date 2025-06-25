@@ -51,14 +51,8 @@ export interface ProcessedTabData {
   metadata: TabMetadata;
 }
 
+// Main client data interface - always uses tabs format
 export interface ClientData {
-  client_info: ClientInfo;
-  search_data: RowItem[];
-  table_config?: TableConfig; // Optional embedded configuration
-}
-
-// New multi-tab client data interface
-export interface MultiTabClientData {
   client_info: ClientInfo;
   tabs: ProcessedTabData[];
   table_config?: TableConfig;
@@ -87,15 +81,6 @@ export interface UseClientDataReturn {
   loading: boolean;
   error: string | null;
   refetch: () => void;
-}
-
-// Extended return type for multi-tab support
-export interface UseMultiTabClientDataReturn {
-  data: ClientData | MultiTabClientData | null;
-  loading: boolean;
-  error: string | null;
-  refetch: () => void;
-  isMultiTab: boolean;
 }
 
 export interface UseTableReturn {

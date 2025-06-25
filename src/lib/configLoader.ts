@@ -39,8 +39,12 @@ export async function loadTableConfig(data?: ClientData | null): Promise<TableCo
     
     // 3. Generate config from data as fallback
     console.log('Generating config from data structure');
-    if (data?.search_data && data.search_data.length > 0) {
-      return generateConfigFromData(data.search_data);
+    if (data?.tabs) {
+      // For tabs data, use the first tab with data to generate config
+      const firstTabWithData = data.tabs.find(tab => tab.hasData && tab.data.length > 0);
+      if (firstTabWithData) {
+        return generateConfigFromData(firstTabWithData.data);
+      }
     }
     
     // Ultimate fallback to default config

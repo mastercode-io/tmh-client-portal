@@ -1,30 +1,25 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   Table,
-  Select,
-  Group,
   Text,
-  ActionIcon,
   Badge,
   Tooltip,
   ScrollArea,
   Stack,
-  Button,
   Box,
 } from '@mantine/core';
 import {
   IconSortAscending,
   IconSortDescending,
-  IconFilter,
-  IconFilterOff,
 } from '@tabler/icons-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RowItem, TableConfig } from '@/lib/types';
 import { ImageCell } from './ImageCell';
 import { ExpandableCell } from './ExpandableCell';
-import { generateConfigFromData, defaultTableConfig } from '@/lib/tableConfig';
+import { generateConfigFromData } from '@/lib/tableConfig';
 import { formatDate } from '@/lib/utils';
 
 interface DataTableProps {
@@ -32,6 +27,11 @@ interface DataTableProps {
   loading?: boolean;
   className?: string;
   config?: TableConfig; // New prop for configuration
+}
+
+interface ScrollIndicatorState {
+  showLeft: boolean;
+  showRight: boolean;
 }
 
 type SortField = keyof RowItem;
@@ -43,6 +43,12 @@ export default function DataTable({
   className,
   config
 }: DataTableProps) {
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<any>(null);
+  const [scrollIndicators, setScrollIndicators] = useState<ScrollIndicatorState>({
+    showLeft: false,
+    showRight: false
+  });
   // Use provided config or generate one from data
   const tableConfig = useMemo(() => {
     if (config) return config;
@@ -59,41 +65,101 @@ export default function DataTable({
   const [criteriaFilter, setCriteriaFilter] = useState<string[]>([]);
   const [classificationFilter, setClassificationFilter] = useState<string[]>([]);
 
+  // Scroll detection logic
+  const checkScrollIndicators = useCallback(() => {
+    const scrollArea = scrollAreaRef.current;
+    const tableContainer = tableContainerRef.current;
+    
+    if (!scrollArea || !tableContainer) {
+      return;
+    }
+
+    // Try multiple selectors for the viewport
+    let viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
+    if (!viewport) {
+      viewport = scrollArea.querySelector('.mantine-ScrollArea-viewport');
+    }
+    if (!viewport) {
+      viewport = scrollArea.querySelector('[data-scrollarea-viewport]');
+    }
+    if (!viewport) {
+      // Fallback to the scrollArea itself
+      viewport = scrollArea;
+    }
+
+    const { scrollLeft, scrollWidth, clientWidth } = viewport;
+    const canScrollLeft = scrollLeft > 0;
+    const canScrollRight = scrollLeft < scrollWidth - clientWidth - 1;
+    
+    // Debug logging for troubleshooting (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Scroll detection debug:', {
+        viewportFound: !!viewport,
+        viewportSelector: viewport.getAttribute('data-radix-scroll-area-viewport') ? 'radix' : 
+                         viewport.className?.includes('mantine-ScrollArea-viewport') ? 'mantine' :
+                         viewport === scrollArea ? 'fallback' : 'unknown',
+        scrollLeft,
+        scrollWidth,
+        clientWidth,
+        canScrollLeft,
+        canScrollRight,
+        hasOverflow: scrollWidth > clientWidth
+      });
+    }
+
+    setScrollIndicators({
+      showLeft: canScrollLeft,
+      showRight: canScrollRight && scrollWidth > clientWidth
+    });
+  }, []);
+
+  // Set up scroll event listener
+  useEffect(() => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+
+    // Try multiple selectors for the viewport
+    let viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
+    if (!viewport) {
+      viewport = scrollArea.querySelector('.mantine-ScrollArea-viewport');
+    }
+    if (!viewport) {
+      viewport = scrollArea.querySelector('[data-scrollarea-viewport]');
+    }
+    if (!viewport) {
+      // Fallback to the scrollArea itself
+      viewport = scrollArea;
+    }
+
+    // Check initially with a small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      checkScrollIndicators();
+    }, 100);
+
+    // Also check after a longer delay in case content is still loading
+    const longerTimer = setTimeout(() => {
+      checkScrollIndicators();
+    }, 500);
+
+    // Add scroll listener to the viewport
+    viewport.addEventListener('scroll', checkScrollIndicators);
+    
+    // Add resize listener to window
+    window.addEventListener('resize', checkScrollIndicators);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(longerTimer);
+      viewport.removeEventListener('scroll', checkScrollIndicators);
+      window.removeEventListener('resize', checkScrollIndicators);
+    };
+  }, [checkScrollIndicators, data]);
+
   // Get visible columns from config
   const visibleColumns = useMemo(() => {
     return tableConfig.columns.filter(col => col.visible);
   }, [tableConfig.columns]);
 
-  // Get unique values for filter dropdowns
-  const criteriaOptions = useMemo(() => {
-    const uniqueCriteria = new Set<string>();
-    
-    data.forEach(item => {
-      if (item.search_criteria) {
-        uniqueCriteria.add(item.search_criteria as string);
-      }
-    });
-    
-    return Array.from(uniqueCriteria).map(value => ({
-      value,
-      label: value
-    }));
-  }, [data]);
-  
-  const classificationOptions = useMemo(() => {
-    const uniqueClassifications = new Set<string>();
-    
-    data.forEach(item => {
-      if (item.classification) {
-        uniqueClassifications.add(item.classification as string);
-      }
-    });
-    
-    return Array.from(uniqueClassifications).map(value => ({
-      value,
-      label: value
-    }));
-  }, [data]);
 
   // Helper function for consistent value comparison
   const compareValues = (aValue: any, bValue: any, direction: SortDirection) => {
@@ -170,18 +236,6 @@ export default function DataTable({
       setSortField(field);
       setSortDirection('asc');
     }
-  };
-
-  const clearFilters = () => {
-    setCriteriaFilter([]);
-    setClassificationFilter([]);
-  };
-
-  const hasActiveFilters = criteriaFilter.length > 0 || classificationFilter.length > 0;
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <IconSortAscending size={14} /> : <IconSortDescending size={14} />;
   };
 
   const getCriteriaColor = (criteria: string) => {
@@ -307,117 +361,35 @@ export default function DataTable({
   }
 
   return (
-      <div className={cn('p-6 flex flex-col', className)}>
-        <Stack gap="md" className="h-full flex flex-col">
-          {/* Header */}
-          <Group justify="space-between" align="center">
-            <div>
-              <Text size="lg" fw={600}>Search Results</Text>
-            </div>
-            <Text size="sm" c="dimmed">
-              {sortedData.length} results
-              {hasActiveFilters && ' (filtered)'}
-            </Text>
-          </Group>
-
-          {/* Filters */}
-          {tableConfig.enableFiltering && (
-            <Group justify="space-between" className="pb-2">
-              <Group>
-                <Select
-                  placeholder="Filter by criteria"
-                  data={criteriaOptions}
-                  value={null}
-                  onChange={(value) => {
-                    if (value && !criteriaFilter.includes(value)) {
-                      setCriteriaFilter([...criteriaFilter, value]);
-                    }
-                  }}
-                  clearable
-                  searchable
-                  leftSection={<IconFilter size={14} />}
-                  size="sm"
-                />
-                <Select
-                  placeholder="Filter by classification"
-                  data={classificationOptions}
-                  value={null}
-                  onChange={(value) => {
-                    if (value && !classificationFilter.includes(value)) {
-                      setClassificationFilter([...classificationFilter, value]);
-                    }
-                  }}
-                  clearable
-                  searchable
-                  leftSection={<IconFilter size={14} />}
-                  size="sm"
-                />
-              </Group>
-              
-              {hasActiveFilters && (
-                <ActionIcon 
-                  variant="subtle" 
-                  onClick={clearFilters}
-                  title="Clear all filters"
-                >
-                  <IconFilterOff size={16} />
-                </ActionIcon>
-              )}
-            </Group>
-          )}
-
-          {/* Active filters */}
-          {hasActiveFilters && (
-            <Group className="flex-wrap gap-2 pb-2">
-              {criteriaFilter.map(filter => (
-                <Badge 
-                  key={filter} 
-                  color={getCriteriaColor(filter)}
-                  variant="light"
-                  size="sm"
-                  rightSection={
-                    <ActionIcon 
-                      size="xs" 
-                      color="blue" 
-                      radius="xl" 
-                      variant="transparent"
-                      onClick={() => setCriteriaFilter(criteriaFilter.filter(f => f !== filter))}
-                    >
-                      ×
-                    </ActionIcon>
-                  }
-                >
-                  {filter}
-                </Badge>
-              ))}
-              
-              {classificationFilter.map(filter => (
-                <Badge 
-                  key={filter} 
-                  color="gray"
-                  variant="light"
-                  size="sm"
-                  rightSection={
-                    <ActionIcon 
-                      size="xs" 
-                      color="blue" 
-                      radius="xl" 
-                      variant="transparent"
-                      onClick={() => setClassificationFilter(classificationFilter.filter(f => f !== filter))}
-                    >
-                      ×
-                    </ActionIcon>
-                  }
-                >
-                  {filter}
-                </Badge>
-              ))}
-            </Group>
-          )}
-
-          {/* Table with ScrollArea taking remaining height */}
-          <ScrollArea className="flex-1" type="always" offsetScrollbars scrollbarSize={8}>
-            <div className="min-w-max">
+      <div className={cn('flex flex-col h-full', className)}>
+          {/* Table with ScrollArea taking full height */}
+          <div className="flex-1 relative min-h-0">
+            {/* Scroll Indicators - perfectly aligned with table header */}
+            {scrollIndicators.showLeft && (
+              <div className="absolute left-0 top-0 z-20 pointer-events-none">
+                <div className="bg-[#6c7d8c] border-r border-gray-300 h-[36px] flex items-center px-2 shadow-sm">
+                  <ChevronLeft size={16} className="text-white" />
+                </div>
+              </div>
+            )}
+            
+            {scrollIndicators.showRight && (
+              <div className="absolute right-0 top-0 z-20 pointer-events-none">
+                <div className="bg-[#6c7d8c] border-l border-gray-300 h-[36px] flex items-center px-2 shadow-sm">
+                  <ChevronRight size={16} className="text-white" />
+                </div>
+              </div>
+            )}
+            
+            <ScrollArea 
+              className="h-full w-full" 
+              type="always" 
+              offsetScrollbars 
+              scrollbarSize={8}
+              ref={scrollAreaRef}
+              style={{ height: '100%' }}
+            >
+            <div className="min-w-max" ref={tableContainerRef}>
               <Table
                   highlightOnHover
                   stickyHeader
@@ -474,25 +446,16 @@ export default function DataTable({
               </Table>
             </div>
           </ScrollArea>
-
+          
+          
           {sortedData.length === 0 && (
-              <Box className="text-center py-12">
-                <Text size="sm" c="dimmed">
-                  {hasActiveFilters ? 'No results match your filters.' : 'No data available.'}
-                </Text>
-                {hasActiveFilters && (
-                    <Button
-                        variant="subtle"
-                        onClick={clearFilters}
-                        size="sm"
-                        className="mt-2"
-                    >
-                      Clear filters to see all results
-                    </Button>
-                )}
-              </Box>
+            <Box className="absolute inset-0 flex items-center justify-center">
+              <Text size="sm" c="dimmed">
+                No data available.
+              </Text>
+            </Box>
           )}
-        </Stack>
+        </div>
       </div>
   );
 }

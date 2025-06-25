@@ -54,6 +54,12 @@ Central type definitions are in `src/lib/types.ts`:
 - Always reference official Mantine v7 documentation for component usage
 - Theme system integrated with Tailwind CSS custom colors
 
+### UI Component Patterns
+- Always use Mantine v7 component APIs (leftSection/rightSection, justify vs position)
+- Horizontal scroll detection: Use refs with scrollWidth vs clientWidth comparison
+- Table modifications: Preserve existing sorting/filtering while updating layout
+- Responsive indicators: Show UI hints when content extends beyond viewport
+
 ### Development Environment Detection
 The application automatically detects environment:
 - Development: Uses Next.js API routes at `/api/client-data`

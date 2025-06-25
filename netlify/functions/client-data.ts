@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { getResponseDataById } from '../../src/lib/responseDataAdapter';
+import { transformMultiTabData } from '../../src/lib/responseDataAdapter';
 
 export const handler: Handler = async (event, context) => {
   // Set CORS headers
@@ -45,8 +45,8 @@ export const handler: Handler = async (event, context) => {
       };
     }
 
-    // Get data from response.json file based on ID
-    const clientData = getResponseDataById(id);
+    // Get data in tabs format
+    const clientData = transformMultiTabData();
 
     if (!clientData) {
       return {
