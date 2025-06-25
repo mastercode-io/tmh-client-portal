@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Text, Tooltip, Modal, Box, Button } from '@mantine/core';
+import { Text, Tooltip, Modal, Box, ActionIcon } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconMaximize, IconMinimize } from '@tabler/icons-react';
+import { Eye } from 'lucide-react';
 
 interface ExpandableCellProps {
   content: string;
@@ -20,20 +20,20 @@ export function ExpandableCell({
   tooltipEnabled = true,
   modalEnabled = true
 }: ExpandableCellProps) {
-  const [expanded, setExpanded] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
 
-  // If content is shorter than maxLength, just display it
+  // If content is shorter than maxLength, just display it normally with tooltip
   if (!content || content.length <= maxLength) {
-    return <Text size="sm">{content || ''}</Text>;
+    return (
+      <Tooltip label={content || ''} withArrow disabled={(content || '').length <= 15}>
+        <Text size="sm" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {content || ''}
+        </Text>
+      </Tooltip>
+    );
   }
 
   const truncatedContent = content.substring(0, maxLength) + '...';
-  
-  const toggleExpand = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setExpanded(!expanded);
-  };
   
   const openModal = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -44,70 +44,46 @@ export function ExpandableCell({
     <>
       <div 
         style={{ 
-          width: width ? `${width}px` : 'auto',
-          maxWidth: width ? `${width}px` : '100%',
-          position: 'relative'
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          minWidth: 0, // Allow shrinking
+          gap: '4px'
         }}
       >
-        {tooltipEnabled ? (
-          <Tooltip 
-            label={expanded ? 'Click to collapse' : 'Click to expand'} 
-            position="top" 
-            withArrow
-          >
-            <div>
-              <Text 
-                size="sm" 
-                style={{ 
-                  whiteSpace: expanded ? 'pre-wrap' : 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  cursor: 'pointer',
-                  wordBreak: 'break-word'
-                }}
-                onClick={toggleExpand}
-              >
-                {expanded ? content : truncatedContent}
-              </Text>
-            </div>
-          </Tooltip>
-        ) : (
+        <Tooltip label={content} withArrow>
           <Text 
             size="sm" 
             style={{ 
-              whiteSpace: expanded ? 'pre-wrap' : 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              cursor: 'pointer',
-              wordBreak: 'break-word'
+              whiteSpace: 'nowrap',
+              flex: 1,
+              minWidth: 0
             }}
-            onClick={toggleExpand}
           >
-            {expanded ? content : truncatedContent}
+            {truncatedContent}
           </Text>
-        )}
+        </Tooltip>
         
-        <div className="flex gap-1 mt-1">
-          <Button 
-            variant="subtle" 
-            size="xs" 
-            onClick={toggleExpand}
-            leftSection={expanded ? <IconMinimize size={12} /> : <IconMaximize size={12} />}
-          >
-            {expanded ? 'Collapse' : 'Expand'}
-          </Button>
-          
-          {modalEnabled && (
-            <Button 
-              variant="subtle" 
-              size="xs" 
+        {modalEnabled && (
+          <Tooltip label="View full content" position="top" withArrow>
+            <ActionIcon
+              variant="light"
+              size="xs"
               onClick={openModal}
-              leftSection={<IconMaximize size={12} />}
+              color="blue"
+              style={{
+                flexShrink: 0,
+                minWidth: '20px',
+                width: '20px',
+                height: '20px'
+              }}
             >
-              Full View
-            </Button>
-          )}
-        </div>
+              <Eye size={12} />
+            </ActionIcon>
+          </Tooltip>
+        )}
       </div>
 
       {modalEnabled && (

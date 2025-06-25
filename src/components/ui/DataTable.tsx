@@ -353,38 +353,25 @@ export default function DataTable({
       );
     }
     
-    // Default rendering with tooltip for potentially long text
-    if (typeof value === 'string' && value.length > 50) {
-      return (
-        <Tooltip label={value} withArrow>
-          <Text 
-            size="sm" 
-            style={{ 
-              maxWidth: columnConfig?.width ? `${columnConfig.width}px` : '200px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {value}
-          </Text>
-        </Tooltip>
-      );
-    }
+    // Default rendering with consistent tooltip behavior
+    const textValue = String(value);
     
-    // Simple text rendering with width constraint
+    // Show tooltip for any text that could potentially be truncated
     return (
-      <Text 
-        size="sm"
-        style={{
-          maxWidth: columnConfig?.width ? `${columnConfig.width}px` : 'auto',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
-        }}
-      >
-        {String(value)}
-      </Text>
+      <Tooltip label={textValue} withArrow disabled={textValue.length <= 15}>
+        <Text 
+          size="sm" 
+          style={{ 
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            width: '100%',
+            display: 'block'
+          }}
+        >
+          {textValue}
+        </Text>
+      </Tooltip>
     );
   };
 
@@ -472,7 +459,8 @@ export default function DataTable({
                           style={{
                             width: column.width ? `${column.width}px` : 'auto',
                             maxWidth: column.width ? `${column.width}px` : 'auto',
-                            overflow: 'hidden'
+                            padding: '8px',
+                            verticalAlign: 'top'
                           }}
                         >
                           {renderCell(item, column.key)}
