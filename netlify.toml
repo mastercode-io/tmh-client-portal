@@ -54,5 +54,6 @@
 
 [dev]
   command = "npm run dev"
-  port = 3847
+  port = 8888
+  targetPort = 3847
   publish = "out"

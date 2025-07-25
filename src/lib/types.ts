@@ -76,11 +76,19 @@ export interface TableFilterState {
   classification: string[];
 }
 
+// Job processing status types
+export interface JobProcessingStatus {
+  phase: 'initializing' | 'getting_parameters' | 'starting_job' | 'processing' | 'finalizing' | 'completed';
+  message: string;
+  progress?: number;
+}
+
 export interface UseClientDataReturn {
   data: ClientData | null;
   loading: boolean;
   error: string | null;
   refetch: () => void;
+  processingStatus?: JobProcessingStatus;
 }
 
 export interface UseTableReturn {

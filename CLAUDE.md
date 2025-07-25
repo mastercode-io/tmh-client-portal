@@ -2,10 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Related Documentation Files
+For additional context and implementation details, refer to:
+- `environment-setup.md` - Google Cloud API authentication and environment configuration
+- `logging-integration-guide.md` - Structured logging system usage and examples
+- `gcloud-job-queue-implementation.md` - Google Cloud job queue system documentation
+- `logs/` directory - Local development debug logs (git-ignored)
+
 ## Common Commands
 
 ### Development
 - `npm run dev` - Start development server on port 3847
+- `netlify dev` - Start Netlify development server with functions (runs on port 8888, proxies to 3847)
 - `npm run build` - Build for production
 - `npm run start` - Start production server on port 3847
 - `npm run export` - Build and export static files
@@ -36,17 +44,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `src/hooks/` - Custom React hooks for data fetching and state management
 - `netlify/functions/` - Serverless functions for production API endpoints
 
-### Data Flow
+### Data Flow (Updated - Job Queue Integration)
 1. URL parameters (`id` or `request_id`) determine client data to load
-2. `useClientData` hook handles API requests to either Next.js API routes (dev) or Netlify Functions (prod)
-3. Data is transformed through `responseDataAdapter` to match internal types
-4. `DataTable` component renders client search results with sorting, filtering, and image display
+2. `useClientData` hook handles API requests with enhanced loading states and request deduplication
+3. **NEW**: API routes use Google Cloud job queue for long-running data extraction:
+   - Step 1: Call Zoho API to get extract job payload
+   - Step 2: Start Google Cloud extract job via authenticated API
+   - Step 3: Poll job status with proper error handling and retry limits
+   - Step 4: Retrieve and transform final results
+4. Data is transformed through `transformZohoResponse` to match internal types
+5. `TabsContainer` component renders multi-tab client search results with sorting, filtering, and image display
 
 ### Important Type Definitions
 Central type definitions are in `src/lib/types.ts`:
 - `ClientData` - Main data structure for client information and search results
 - `RowItem` - Flexible row structure supporting dynamic properties
 - `TableConfig` - Configuration for table display and behavior
+- `JobProcessingStatus` - **NEW**: Job progress tracking for enhanced UX
+- `UseClientDataReturn` - **UPDATED**: Now includes processingStatus for job progress
 
 ### Mantine v7 Specific Notes
 - Uses Mantine v7 API (significant changes from v6)
@@ -64,6 +79,16 @@ Central type definitions are in `src/lib/types.ts`:
 The application automatically detects environment:
 - Development: Uses Next.js API routes at `/api/client-data`
 - Production: Uses Netlify Functions at `/.netlify/functions/client-data`
+- **Both environments now use the same Google Cloud job queue integration**
+
+### Required Environment Variables
+For Google Cloud job queue integration:
+- `GCLOUD_BASE_URL` - Google Cloud Function base URL
+- `GCLOUD_API_TOKEN` - Bearer token for Google Cloud API authentication
+
+For logging system (optional):
+- `LOG_LEVEL` - error|warn|info|debug|trace (default: info)
+- `LOG_TO_FILE` - true|false (local dev only, default: false)
 
 ### TypeScript Configuration
 - Strict mode enabled with `isolatedModules` for production builds
@@ -76,3 +101,33 @@ The application automatically detects environment:
 - Playwright for end-to-end testing
 - Tests located in `__tests__/` directory
 - Pre-commit hooks with Husky and lint-staged ensure code quality
+
+## Recent Major Updates
+
+### Job Queue Integration (Timeout Solution)
+- **Problem Solved**: Eliminated 10-second Netlify function timeout issues
+- **Implementation**: Google Cloud job queue with polling pattern
+- **Benefits**: Reliable data fetching, progress tracking, better error handling
+- **Files Modified**: `netlify/functions/client-data.ts`, `src/app/api/client-data/route.ts`, `src/hooks/useClientData.ts`
+
+### Enhanced Error Handling
+- **Non-recoverable errors**: Stop immediately (404, auth failures, bad requests)
+- **Recoverable errors**: Retry with exponential backoff (max 3 attempts)
+- **Request deduplication**: Prevent duplicate jobs for same request ID
+- **Proper cleanup**: AbortController and request tracking
+
+### URL Parameter Loading Fix
+- **Issue**: Direct URL access showed "No Data Found" due to Next.js hydration timing
+- **Solution**: Added parameter loading state with small delay for search params availability
+- **Result**: Seamless experience on direct URL access
+
+### Structured Logging System
+- **Location**: `src/lib/logger.ts` - Non-intrusive logging utility
+- **Features**: Environment-based log levels, file output for dev, JSON for production
+- **Usage**: Optional integration alongside existing console.log statements
+- **Configuration**: Via LOG_LEVEL and LOG_TO_FILE environment variables
+
+### Netlify Dev Configuration
+- **Issue**: Port conflict between Netlify CLI and Next.js dev server
+- **Solution**: Updated `netlify.toml` with correct port mapping (8888 → 3847)
+- **Usage**: `netlify dev` now works seamlessly for local function testing

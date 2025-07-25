@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Stack, Paper, Group, Text, Badge } from '@mantine/core';
 import { IconBuilding, IconSearch, IconWorld, IconCalendar } from '@tabler/icons-react';
 import Header from '@/components/layout/Header';
@@ -14,10 +14,36 @@ import { ClientData } from '@/lib/types';
 
 export default function HomePage() {
   const searchParams = useSearchParams();
-  const requestId = searchParams.get('id') || searchParams.get('request_id');
+  const [isParamsLoaded, setIsParamsLoaded] = useState(false);
   
+  // Wait for search params to be available (Next.js hydration)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsParamsLoaded(true);
+    }, 100); // Small delay to allow params to load
+    
+    return () => clearTimeout(timer);
+  }, [searchParams]);
+  
+  const requestId = searchParams?.get('id') || searchParams?.get('request_id');
   const { data, loading, error, refetch } = useClientData(requestId);
 
+  // Show loading while waiting for params to be available
+  if (!isParamsLoaded) {
+    return (
+      <div className="flex flex-col h-screen overflow-hidden">
+        <Header />
+        <div className="flex-1 bg-[#f8fafc] overflow-hidden">
+          <Container size="xl" className="py-8">
+            <LoadingSpinner centered message="Loading page..." />
+          </Container>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Only show "Missing Request ID" after params have loaded and are confirmed missing
   if (!requestId) {
     return (
       <div className="flex flex-col h-screen overflow-hidden">
