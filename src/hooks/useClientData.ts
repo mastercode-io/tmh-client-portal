@@ -58,6 +58,8 @@ export function useClientData(requestId: string | null): UseClientDataReturn {
     // Create the promise for this request
     const requestPromise = (async () => {
 
+    let progressInterval: NodeJS.Timeout | null = null;
+    
     try {
       setProcessingStatus({
         phase: 'getting_parameters',
@@ -70,10 +72,10 @@ export function useClientData(requestId: string | null): UseClientDataReturn {
       
       // Start the request with enhanced progress tracking
       const startTime = Date.now();
-      let lastProgressUpdate = startTime;
+      const lastProgressUpdate = startTime;
       
       // Create a timeout to update processing status during long requests
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         const elapsed = Date.now() - startTime;
         
         if (elapsed > 5000 && elapsed < 30000) {
@@ -94,7 +96,7 @@ export function useClientData(requestId: string | null): UseClientDataReturn {
       const response = await fetch(url, {
         signal: abortController.signal
       });
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       
       if (!response.ok) {
         // Enhanced error messages based on status code
@@ -142,7 +144,7 @@ export function useClientData(requestId: string | null): UseClientDataReturn {
         throw new Error(result.error || 'Failed to fetch data');
       }
     } catch (err: any) {
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       
       // Handle abort separately
       if (err.name === 'AbortError') {

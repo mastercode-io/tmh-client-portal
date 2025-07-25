@@ -7,7 +7,6 @@ import {
   Badge,
   Tooltip,
   ScrollArea,
-  Stack,
   Box,
 } from '@mantine/core';
 import {
@@ -62,8 +61,8 @@ export default function DataTable({
   const [sortDirection, setSortDirection] = useState<SortDirection>(
     tableConfig.defaultSort?.direction || 'desc'
   );
-  const [criteriaFilter, setCriteriaFilter] = useState<string[]>([]);
-  const [classificationFilter, setClassificationFilter] = useState<string[]>([]);
+  const [criteriaFilter] = useState<string[]>([]);
+  const [classificationFilter] = useState<string[]>([]);
 
   // Scroll detection logic
   const checkScrollIndicators = useCallback(() => {

@@ -7,7 +7,7 @@ interface HeaderProps {
   clientName?: string;
 }
 
-export default function Header({ clientName }: HeaderProps) {
+export default function Header({ clientName: _clientName }: HeaderProps) {
   return (
     <header className="bg-tmh-dark-header border-b border-gray-700 sticky top-0 z-50">
       <Container size="xl" className="py-4">

@@ -96,8 +96,8 @@ export interface UseTableReturn {
   filteredData: RowItem[];
   sortState: TableSortState;
   filterState: TableFilterState;
-  handleSort: (column: keyof RowItem) => void;
-  handleFilter: (filters: Partial<TableFilterState>) => void;
+  handleSort: (_column: keyof RowItem) => void;
+  handleFilter: (_filters: Partial<TableFilterState>) => void;
   resetFilters: () => void;
 }
 

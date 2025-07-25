@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Modal, Box, Group, Text } from '@mantine/core';
+import { Modal, Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { cn } from '@/lib/utils';
 import { isValidBase64Image } from '@/lib/utils';

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Text, Tooltip, Modal, Box, ActionIcon } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Eye } from 'lucide-react';
@@ -16,8 +15,6 @@ interface ExpandableCellProps {
 export function ExpandableCell({
   content,
   maxLength = 100,
-  width,
-  tooltipEnabled = true,
   modalEnabled = true
 }: ExpandableCellProps) {
   const [opened, { open, close }] = useDisclosure(false);

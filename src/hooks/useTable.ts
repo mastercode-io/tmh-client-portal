@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { RowItem, TableSortState, TableFilterState, UseTableReturn } from '@/lib/types';
-import { sortData, filterData } from '@/lib/utils';
+import { sortData } from '@/lib/utils';
 
 export function useTable(data: RowItem[]): UseTableReturn {
   const [sortState, setSortState] = useState<TableSortState>({

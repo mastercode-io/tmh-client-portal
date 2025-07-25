@@ -41,7 +41,7 @@ export function transformMultiTabData(): ClientData {
         }
         
         // Create a new object without the image property
-        const { image, ...rest } = item;
+        const { image: _image, ...rest } = item;
         
         // Add an id if not present and include the properly formatted image
         const rowItem: RowItem = { 
