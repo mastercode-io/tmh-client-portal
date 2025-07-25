@@ -334,12 +334,12 @@ export default function DataTable({
     
     // Handle Excel error values
     if (isExcelError(value)) {
-      return <Text size="sm" c="dimmed">Data processing error</Text>;
+      return <Text size="sm" c="dimmed">N/A</Text>;
     }
     
     // Handle problematic object values and empty arrays
     if (isProblematicValue(value)) {
-      return <Text size="sm" c="dimmed">Data not available</Text>;
+      return <Text size="sm" c="dimmed">N/A</Text>;
     }
     
     if (typeof value === 'boolean') {

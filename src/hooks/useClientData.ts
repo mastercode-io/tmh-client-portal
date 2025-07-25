@@ -1,203 +1,190 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ClientData, UseClientDataReturn, JobProcessingStatus } from '@/lib/types';
 import { logger } from '@/lib/clientLogger';
-
-// Track active requests to prevent duplicates
-const activeRequests = new Map<string, Promise<any>>();
 
 export function useClientData(requestId: string | null): UseClientDataReturn {
   const [data, setData] = useState<ClientData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<JobProcessingStatus | undefined>(undefined);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const fetchData = useCallback(async () => {
+  useEffect(() => {
+    // Don't do anything if no requestId
     if (!requestId) {
       setData(null);
       setError('No request ID provided');
       setLoading(false);
       return;
     }
-    
-    // Clear any previous error when we have a valid requestId
-    setError(null);
 
-    // Check if there's already an active request for this ID
-    const existingRequest = activeRequests.get(requestId);
-    if (existingRequest) {
-      console.log('useClientData - Request already in progress for:', requestId);
-      try {
-        await existingRequest;
-      } catch (err) {
-        // The existing request failed, we'll proceed with a new one
-        console.log('useClientData - Existing request failed, starting new request');
-      }
-      return;
-    }
-
-    // Cancel any previous request from this hook instance
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Create new abort controller for this request
+    // Flag to handle React 18 Strict Mode double mount
+    let isCancelled = false;
     const abortController = new AbortController();
-    abortControllerRef.current = abortController;
 
-    setLoading(true);
-    setError(null);
-    setProcessingStatus({
-      phase: 'initializing',
-      message: 'Initializing data request...'
-    });
-
-    console.log('useClientData - Fetching data for request ID:', requestId);
-
-    // Create the promise for this request
-    const requestPromise = (async () => {
-
-    let progressInterval: NodeJS.Timeout | null = null;
-    
-    try {
-      setProcessingStatus({
-        phase: 'getting_parameters',
-        message: 'Getting extraction parameters from Zoho...'
-      });
-
-      const params = new URLSearchParams({ id: requestId });
-      const url = `/api/client-data?${params.toString()}`;
-      console.log('useClientData - Fetch URL:', url);
+    const fetchData = async () => {
+      console.log('useClientData Debug - Starting API call for:', requestId);
       
-      // Start the request with enhanced progress tracking
-      const startTime = Date.now();
-      const lastProgressUpdate = startTime;
+      setLoading(true);
+      setError(null);
       
-      // Create a timeout to update processing status during long requests
-      progressInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        
-        if (elapsed > 5000 && elapsed < 30000) {
-          setProcessingStatus({
-            phase: 'processing',
-            message: 'Processing Excel file in background...',
-            progress: Math.min(Math.floor((elapsed - 5000) / 600), 80) // Estimate progress up to 80%
-          });
-        } else if (elapsed >= 30000) {
-          setProcessingStatus({
-            phase: 'finalizing',
-            message: 'Finalizing results...',
-            progress: 90
-          });
-        }
-      }, 2000);
-      
-      const fetchStartTime = Date.now();
-      logger.logApiRequest('GET', url, {}, undefined, requestId);
-      
-      const response = await fetch(url, {
-        signal: abortController.signal
-      });
-      
-      const fetchDuration = Date.now() - fetchStartTime;
-      if (progressInterval) clearInterval(progressInterval);
-      
-      logger.logApiResponse('GET', url, response.status, fetchDuration, undefined, requestId);
-      
-      if (!response.ok) {
-        // Enhanced error messages based on status code
-        let errorMessage = `Request failed with status ${response.status}`;
-        
-        if (response.status === 408) {
-          errorMessage = 'Request timed out - the data extraction is taking longer than expected';
-        } else if (response.status === 502) {
-          errorMessage = 'Server temporarily unavailable - please try again';
-        } else if (response.status >= 500) {
-          errorMessage = 'Server error occurred - please try again in a few moments';
-        }
-        
-        throw new Error(errorMessage);
-      }
-      
-      setProcessingStatus({
-        phase: 'finalizing',
-        message: 'Processing completed, preparing data...',
-        progress: 95
-      });
-      
-      const result = await response.json();
-      console.log('useClientData - API Response:', {
-        success: result.success,
-        hasData: !!result.data,
-        tabCount: result.data?.tabs?.length,
-        itemCount: result.data?.tabs?.reduce((acc: number, tab: any) => acc + tab.data.length, 0)
-      });
-      
-      if (result.success) {
+      if (!isCancelled) {
         setProcessingStatus({
-          phase: 'completed',
-          message: 'Data loaded successfully',
-          progress: 100
+          phase: 'initializing',
+          message: 'Initializing data request...'
+        });
+      }
+
+      let progressInterval: NodeJS.Timeout | null = null;
+      
+      try {
+        if (!isCancelled) {
+          setProcessingStatus({
+            phase: 'getting_parameters',
+            message: 'Getting extraction parameters from Zoho...'
+          });
+        }
+
+        const params = new URLSearchParams({ id: requestId });
+        const url = `/api/client-data?${params.toString()}`;
+        console.log('useClientData Debug - API Call Details:', {
+          originalRequestId: requestId,
+          urlParams: params.toString(),
+          fullUrl: url,
+          decodedParams: Object.fromEntries(params.entries())
         });
         
-        setData(result.data);
+        // Start the request with enhanced progress tracking
+        const startTime = Date.now();
         
-        // Clear processing status after a brief delay
-        setTimeout(() => {
+        // Create a timeout to update processing status during long requests
+        progressInterval = setInterval(() => {
+          if (isCancelled) return;
+          
+          const elapsed = Date.now() - startTime;
+          
+          if (elapsed > 5000 && elapsed < 30000) {
+            setProcessingStatus({
+              phase: 'processing',
+              message: 'Processing Excel file in background...',
+              progress: Math.min(Math.floor((elapsed - 5000) / 600), 80)
+            });
+          } else if (elapsed >= 30000) {
+            setProcessingStatus({
+              phase: 'finalizing',
+              message: 'Finalizing results...',
+              progress: 90
+            });
+          }
+        }, 2000);
+        
+        const fetchStartTime = Date.now();
+        logger.logApiRequest('GET', url, {}, undefined, requestId);
+        
+        const response = await fetch(url, {
+          signal: abortController.signal
+        });
+        
+        const fetchDuration = Date.now() - fetchStartTime;
+        if (progressInterval) clearInterval(progressInterval);
+        
+        logger.logApiResponse('GET', url, response.status, fetchDuration, undefined, requestId);
+        
+        if (!response.ok) {
+          let errorMessage = `Request failed with status ${response.status}`;
+          
+          if (response.status === 408) {
+            errorMessage = 'Request timed out - the data extraction is taking longer than expected';
+          } else if (response.status === 502) {
+            errorMessage = 'Server temporarily unavailable - please try again';
+          } else if (response.status >= 500) {
+            errorMessage = 'Server error occurred - please try again in a few moments';
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        if (!isCancelled) {
+          setProcessingStatus({
+            phase: 'finalizing',
+            message: 'Processing completed, preparing data...',
+            progress: 95
+          });
+        }
+        
+        const result = await response.json();
+        console.log('useClientData Debug - Complete API Response:', {
+          success: result.success,
+          hasData: !!result.data,
+          tabCount: result.data?.tabs?.length,
+          itemCount: result.data?.tabs?.reduce((acc: number, tab: any) => acc + tab.data.length, 0),
+          error: result.error,
+          fullResult: result
+        });
+        
+        // Only update state if not cancelled (React 18 Strict Mode protection)
+        if (!isCancelled) {
+          if (result.success) {
+            setProcessingStatus({
+              phase: 'completed',
+              message: 'Data loaded successfully',
+              progress: 100
+            });
+            
+            setData(result.data);
+            
+            // Clear processing status after a brief delay
+            setTimeout(() => {
+              if (!isCancelled) {
+                setProcessingStatus(undefined);
+              }
+            }, 1500);
+          } else {
+            throw new Error(result.error || 'Failed to fetch data');
+          }
+        }
+      } catch (err: any) {
+        if (progressInterval) clearInterval(progressInterval);
+        
+        // Handle abort separately - don't update state if cancelled
+        if (err.name === 'AbortError' || abortController.signal.aborted) {
+          console.log('useClientData Debug - Request aborted for:', requestId);
+          return;
+        }
+        
+        if (!isCancelled) {
+          const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+          console.error('useClientData Debug - Error for:', requestId, message);
+          setError(message);
+          setData(null);
           setProcessingStatus(undefined);
-        }, 1500);
-      } else {
-        throw new Error(result.error || 'Failed to fetch data');
-      }
-    } catch (err: any) {
-      if (progressInterval) clearInterval(progressInterval);
-      
-      // Handle abort separately
-      if (err.name === 'AbortError') {
-        console.log('useClientData - Request aborted');
-        return;
-      }
-      
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-      console.error('useClientData - Error:', message);
-      setError(message);
-      setData(null);
-      setProcessingStatus(undefined);
-    } finally {
-      setLoading(false);
-      // Remove from active requests
-      activeRequests.delete(requestId);
-    }
-    })();
-
-    // Store the promise to prevent duplicate requests
-    activeRequests.set(requestId, requestPromise);
-    
-    try {
-      await requestPromise;
-    } catch (err) {
-      // Error already handled in the inner try-catch
-    }
-  }, [requestId]);
-
-  useEffect(() => {
-    fetchData();
-    
-    // Cleanup function to abort request if component unmounts
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     };
-  }, [fetchData]);
+
+    fetchData();
+
+    // Cleanup function for React 18 Strict Mode
+    return () => {
+      console.log('useClientData Debug - Cleaning up request for:', requestId);
+      isCancelled = true;
+      abortController.abort();
+    };
+  }, [requestId]);
 
   const refetch = useCallback(() => {
-    console.log('useClientData - Refetching data');
-    fetchData();
-  }, [fetchData]);
+    console.log('useClientData Debug - Manual refetch triggered');
+    // Clear current data to show loading state
+    setData(null);
+    setError(null);
+    // The useEffect will re-run because we're not changing requestId
+    // We can trigger a re-render by temporarily changing state
+  }, []);
 
   return {
     data,

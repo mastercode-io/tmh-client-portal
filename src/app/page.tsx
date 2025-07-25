@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Container, Stack, Paper, Group, Text, Badge } from '@mantine/core';
 import { IconBuilding, IconSearch, IconWorld, IconCalendar } from '@tabler/icons-react';
 import Header from '@/components/layout/Header';
@@ -12,9 +12,19 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useClientData } from '@/hooks/useClientData';
 import { ClientData } from '@/lib/types';
 
-export default function HomePage() {
+function HomePage() {
   const searchParams = useSearchParams();
   const requestId = searchParams?.get('id') || searchParams?.get('request_id');
+  
+  // Debug logging for URL parameter issue
+  console.log('HomePage Debug - URL Parameter Analysis:', {
+    searchParams: searchParams ? Object.fromEntries(searchParams.entries()) : null,
+    rawId: searchParams?.get('id'),
+    rawRequestId: searchParams?.get('request_id'),
+    finalRequestId: requestId,
+    url: typeof window !== 'undefined' ? window.location.href : 'server-side'
+  });
+  
   const { data, loading, error, refetch } = useClientData(requestId);
 
   // Show "Missing Request ID" if no requestId in URL
@@ -190,5 +200,27 @@ export default function HomePage() {
       
       <Footer />
     </div>
+  );
+}
+
+function PageLoadingFallback() {
+  return (
+    <div className="flex flex-col h-screen overflow-hidden">
+      <Header />
+      <div className="flex-1 bg-[#f8fafc] overflow-hidden">
+        <Container size="xl" className="py-8">
+          <LoadingSpinner centered message="Loading page..." />
+        </Container>
+      </div>
+      <Footer />
+    </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<PageLoadingFallback />}>
+      <HomePage />
+    </Suspense>
   );
 }

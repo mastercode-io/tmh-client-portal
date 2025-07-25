@@ -104,6 +104,37 @@ For logging system (optional):
 
 ## Recent Major Updates
 
+### React 18 Strict Mode Compatibility Fix (CRITICAL)
+- **Problem**: URL parameter loading showed "No Data Found" due to component unmount/remount cycles
+- **Root Cause**: React 18 Strict Mode intentionally unmounts/remounts components to test cleanup
+- **Symptoms**: 
+  - API requests getting aborted during development
+  - "Component unmounting, aborting any active request" logs
+  - Data fails to load despite correct URL parameters
+- **Solution**: Proper useEffect cleanup with `isCancelled` flag pattern
+- **Files Modified**: `src/hooks/useClientData.ts`, `src/app/page.tsx` (Suspense boundary)
+- **Key Pattern**: Always use `isCancelled` flag + AbortController for React 18 compatibility
+```typescript
+useEffect(() => {
+  let isCancelled = false;
+  const abortController = new AbortController();
+  
+  const fetchData = async () => {
+    // API call logic
+    if (!isCancelled) {
+      setState(data); // Only update if not cancelled
+    }
+  };
+  
+  fetchData();
+  
+  return () => {
+    isCancelled = true;
+    abortController.abort();
+  };
+}, [dependency]);
+```
+
 ### Job Queue Integration (Timeout Solution)
 - **Problem Solved**: Eliminated 10-second Netlify function timeout issues
 - **Implementation**: Google Cloud job queue with polling pattern
@@ -116,10 +147,11 @@ For logging system (optional):
 - **Request deduplication**: Prevent duplicate jobs for same request ID
 - **Proper cleanup**: AbortController and request tracking
 
-### URL Parameter Loading Fix
-- **Issue**: Direct URL access showed "No Data Found" due to Next.js hydration timing
-- **Solution**: Added parameter loading state with small delay for search params availability
-- **Result**: Seamless experience on direct URL access
+### Next.js 14 App Router useSearchParams Integration
+- **Issue**: Direct URL access with search params caused hydration mismatches
+- **Solution**: Wrapped components using `useSearchParams()` in `<Suspense>` boundaries
+- **Pattern**: Always wrap `useSearchParams()` components in Suspense to prevent CSR bailout
+- **Files Modified**: `src/app/page.tsx`
 
 ### Structured Logging System
 - **Location**: `src/lib/logger.ts` - Non-intrusive logging utility
