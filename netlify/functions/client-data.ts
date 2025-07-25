@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions';
 import { transformZohoResponse } from '../../src/lib/zohoDataAdapter';
+import { logger } from '../../src/lib/logger';
 
 // Google Cloud job queue configuration
 const GCLOUD_BASE_URL = process.env.GCLOUD_BASE_URL || 'https://us-central1-excel-pptx-merger.cloudfunctions.net/excel-pptx-merger';
@@ -158,14 +159,22 @@ export const handler: Handler = async (event, context) => {
       
       console.log('DEBUG - Job start payload being sent to GCloud:', JSON.stringify(jobStartPayload, null, 2));
       
+      const requestHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GCLOUD_API_TOKEN}`,
+      };
+      
+      const startTime = Date.now();
+      logger.logApiRequest('POST', `${GCLOUD_BASE_URL}/api/v1/jobs/start`, requestHeaders, jobStartPayload, id);
+      
       const jobStartResponse = await fetch(`${GCLOUD_BASE_URL}/api/v1/jobs/start`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${GCLOUD_API_TOKEN}`,
-        },
+        headers: requestHeaders,
         body: JSON.stringify(jobStartPayload),
       });
+      
+      const duration = Date.now() - startTime;
+      logger.logApiResponse('POST', `${GCLOUD_BASE_URL}/api/v1/jobs/start`, jobStartResponse.status, duration, undefined, id);
 
       if (!jobStartResponse.ok) {
         const errorText = await jobStartResponse.text();
@@ -208,11 +217,19 @@ export const handler: Handler = async (event, context) => {
     while (attempts < maxAttempts) {
       try {
         // Check job status
+        const statusHeaders = {
+          'Authorization': `Bearer ${GCLOUD_API_TOKEN}`,
+        };
+        
+        const statusStartTime = Date.now();
+        logger.logApiRequest('GET', `${GCLOUD_BASE_URL}/api/v1/jobs/${jobId}/status`, statusHeaders, undefined, id, jobId);
+        
         const statusResponse = await fetch(`${GCLOUD_BASE_URL}/api/v1/jobs/${jobId}/status`, {
-          headers: {
-            'Authorization': `Bearer ${GCLOUD_API_TOKEN}`,
-          },
+          headers: statusHeaders,
         });
+        
+        const statusDuration = Date.now() - statusStartTime;
+        logger.logApiResponse('GET', `${GCLOUD_BASE_URL}/api/v1/jobs/${jobId}/status`, statusResponse.status, statusDuration, undefined, id, jobId);
 
         if (!statusResponse.ok) {
           // Handle non-recoverable errors
@@ -264,11 +281,19 @@ export const handler: Handler = async (event, context) => {
 
         if (status.status === 'completed') {
           // Get final results
+          const resultHeaders = {
+            'Authorization': `Bearer ${GCLOUD_API_TOKEN}`,
+          };
+          
+          const resultStartTime = Date.now();
+          logger.logApiRequest('GET', `${GCLOUD_BASE_URL}/api/v1/jobs/${jobId}/result`, resultHeaders, undefined, id, jobId);
+          
           const resultResponse = await fetch(`${GCLOUD_BASE_URL}/api/v1/jobs/${jobId}/result`, {
-            headers: {
-              'Authorization': `Bearer ${GCLOUD_API_TOKEN}`,
-            },
+            headers: resultHeaders,
           });
+          
+          const resultDuration = Date.now() - resultStartTime;
+          logger.logApiResponse('GET', `${GCLOUD_BASE_URL}/api/v1/jobs/${jobId}/result`, resultResponse.status, resultDuration, undefined, id, jobId);
 
           if (!resultResponse.ok) {
             throw new Error(`Failed to get results: ${resultResponse.status}`);

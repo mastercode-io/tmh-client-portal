@@ -222,6 +222,81 @@ class Logger {
     });
   }
 
+  // API Request logging with headers (including API keys)
+  logApiRequest(
+    method: string,
+    url: string,
+    headers: Record<string, string>,
+    body?: any,
+    requestId?: string,
+    jobId?: string
+  ): void {
+    // Mask sensitive headers for security
+    const maskedHeaders = this.maskSensitiveHeaders(headers);
+    
+    const requestData = {
+      method,
+      url,
+      headers: maskedHeaders,
+      ...(body && { body: typeof body === 'string' ? body : JSON.stringify(body) })
+    };
+
+    this.debug(`API Request: ${method} ${url}`, requestData, {
+      requestId,
+      jobId,
+      context: 'api-request'
+    });
+  }
+
+  // API Response logging with timing
+  logApiResponse(
+    method: string,
+    url: string,
+    statusCode: number,
+    duration: number,
+    responseBody?: any,
+    requestId?: string,
+    jobId?: string
+  ): void {
+    const responseData = {
+      method,
+      url,
+      statusCode,
+      duration,
+      success: statusCode >= 200 && statusCode < 300,
+      ...(responseBody && { responseBody })
+    };
+
+    const level = statusCode >= 400 ? 'error' : 'debug';
+    this[level](`API Response: ${method} ${url} - ${statusCode} (${duration}ms)`, responseData, {
+      requestId,
+      jobId,
+      context: 'api-response'
+    });
+  }
+
+  // Helper method to mask sensitive data in headers
+  private maskSensitiveHeaders(headers: Record<string, string>): Record<string, string> {
+    const masked = { ...headers };
+    const sensitiveKeys = ['authorization', 'x-api-key', 'api-key', 'bearer', 'token'];
+    
+    Object.keys(masked).forEach(key => {
+      const lowerKey = key.toLowerCase();
+      if (sensitiveKeys.some(sensitive => lowerKey.includes(sensitive))) {
+        const value = masked[key];
+        if (value && value.length > 8) {
+          // Show first 4 and last 4 characters with asterisks in between
+          masked[key] = value.substring(0, 4) + '*'.repeat(value.length - 8) + value.substring(value.length - 4);
+        } else if (value) {
+          // For shorter values, just show first character and asterisks
+          masked[key] = value.substring(0, 1) + '*'.repeat(value.length - 1);
+        }
+      }
+    });
+    
+    return masked;
+  }
+
   // Payload logging (only to file, never console)
   logPayload(name: string, payload: any, requestId?: string, jobId?: string): void {
     this.debug(`Payload: ${name}`, payload, { 

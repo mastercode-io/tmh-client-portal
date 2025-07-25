@@ -285,6 +285,29 @@ export default function DataTable({
     return colors[criteria] || 'gray';
   };
 
+  // Helper function to detect Excel error values
+  const isExcelError = (value: any): boolean => {
+    if (typeof value !== 'string') return false;
+    const excelErrors = ['#VALUE!', '#ERROR!', '#REF!', '#NAME?', '#DIV/0!', '#N/A', '#NULL!', '#NUM!'];
+    return excelErrors.includes(value);
+  };
+
+  // Helper function to detect problematic object values
+  const isProblematicValue = (value: any): boolean => {
+    // Check for objects that would stringify to [object Object]
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      const stringified = String(value);
+      return stringified === '[object Object]';
+    }
+    
+    // Check for empty arrays
+    if (Array.isArray(value) && value.length === 0) {
+      return true;
+    }
+    
+    return false;
+  };
+
   // Helper function to render the appropriate cell based on column key
   const renderCell = (item: RowItem, columnKey: string) => {
     // Find the column config for this key
@@ -307,6 +330,16 @@ export default function DataTable({
     // Handle different data types
     if (value === null || value === undefined) {
       return <Text size="sm" c="dimmed">—</Text>;
+    }
+    
+    // Handle Excel error values
+    if (isExcelError(value)) {
+      return <Text size="sm" c="dimmed">Data processing error</Text>;
+    }
+    
+    // Handle problematic object values and empty arrays
+    if (isProblematicValue(value)) {
+      return <Text size="sm" c="dimmed">Data not available</Text>;
     }
     
     if (typeof value === 'boolean') {

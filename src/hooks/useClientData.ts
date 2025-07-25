@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ClientData, UseClientDataReturn, JobProcessingStatus } from '@/lib/types';
+import { logger } from '@/lib/clientLogger';
 
 // Track active requests to prevent duplicates
 const activeRequests = new Map<string, Promise<any>>();
@@ -93,10 +94,17 @@ export function useClientData(requestId: string | null): UseClientDataReturn {
         }
       }, 2000);
       
+      const fetchStartTime = Date.now();
+      logger.logApiRequest('GET', url, {}, undefined, requestId);
+      
       const response = await fetch(url, {
         signal: abortController.signal
       });
+      
+      const fetchDuration = Date.now() - fetchStartTime;
       if (progressInterval) clearInterval(progressInterval);
+      
+      logger.logApiResponse('GET', url, response.status, fetchDuration, undefined, requestId);
       
       if (!response.ok) {
         // Enhanced error messages based on status code
